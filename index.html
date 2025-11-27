@@ -1,0 +1,611 @@
+<!--
+// Copyright (c) 2025 陳義龍
+// All rights reserved.
+// Unauthorized copying, modification, or distribution of this Web App is prohibited.
+// Contact: zerosparty@gmail.com
+-->
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>赫賀豚吞嚥訓練管家</title>
+    
+    <!-- 1. 載入樣式庫 (Tailwind CSS) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. 載入 Babel (負責翻譯 React 程式碼) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- 3. 載入 Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #F7F4F2;
+            -webkit-tap-highlight-color: transparent; /* 移除手機點擊高亮 */
+        }
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fade-in 0.5s ease-out forwards;
+        }
+        
+        /* 列印樣式調整 */
+        @media print {
+            @page { size: A4; margin: 0; }
+            body { background-color: white; }
+            .no-print { display: none !important; }
+            .print-container { 
+                box-shadow: none !important; 
+                margin: 0 !important; 
+                width: 100% !important; 
+                max-width: 100% !important;
+                padding: 0 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <!-- React Application Script (使用 ESM 模組) -->
+    <script type="text/babel" data-type="module">
+        import React, { useState, useEffect, useRef } from 'https://esm.sh/react@18.2.0';
+        import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client';
+        import { 
+            Plus, Trash2, Play, Pause, Clock, Repeat, Image as ImageIcon, 
+            Save, CheckCircle, RotateCcw, Home, Coffee, Info, AlertCircle, 
+            SkipForward, ArrowLeft, ArrowUp, ArrowDown, Menu, User, X, 
+            ChevronRight, Users, Printer, FileText, AlertTriangle, Edit3, 
+            Copyright, Mail 
+        } from 'https://esm.sh/lucide-react@0.294.0';
+
+        // --- 1. 預設動作資料 (9組標準動作) ---
+        const DEFAULT_EXERCISES_TEMPLATE = [
+            { 
+                id: 'ex-1', 
+                name: '舌頭前後運動', 
+                description: '舌頭向前伸（越長越好），再快速收回。', 
+                duration: 15, sets: 5, rest: 5, 
+                imagePreview: '😛' 
+            },
+            { 
+                id: 'ex-2', 
+                name: '舌頭左右運動', 
+                description: '舌頭伸出往左右嘴角移動。', 
+                duration: 20, sets: 5, rest: 5, 
+                imagePreview: '⬅️➡️' 
+            },
+            { 
+                id: 'ex-3', 
+                name: '舌上抬運動', 
+                description: '舌頭伸出往上翹（舌頭去舔鼻子）。', 
+                duration: 10, sets: 5, rest: 5, 
+                imagePreview: '⬆️' 
+            },
+            { 
+                id: 'ex-4', 
+                name: '張嘴運動', 
+                description: '嘴巴盡力張開。', 
+                duration: 15, sets: 5, rest: 5, 
+                imagePreview: '😲' 
+            },
+            { 
+                id: 'ex-5', 
+                name: '微笑運動', 
+                description: '牙齒閉合，露齒微笑', 
+                duration: 15, sets: 5, rest: 5, 
+                imagePreview: '😁' 
+            },
+            { 
+                id: 'ex-6', 
+                name: '嘟嘴運動', 
+                description: '用力噘起嘴。', 
+                duration: 15, sets: 5, rest: 5, 
+                imagePreview: '😗' 
+            },
+            { 
+                id: 'ex-7', 
+                name: 'Hawk發聲運動', 
+                description: '吸一口氣，然後說出「厚科」這個詞，並且「科」要拉長音持續約4秒鐘。', 
+                duration: 20, sets: 5, rest: 10, 
+                imagePreview: '🗣️' 
+            },
+            { 
+                id: 'ex-8', 
+                name: 'Masako運動', 
+                description: '舌頭往前伸，用牙齒輕輕地含著，接著用力吞口水，重複吞3～5次。', 
+                duration: 15, sets: 5, rest: 10, 
+                imagePreview: '🙂' 
+            },
+            { 
+                id: 'ex-9', 
+                name: 'CTAR運動', 
+                description: '坐直或站直，肩膀後收，將彈力球放在下巴底下夾著，下巴用力向下壓住球。', 
+                duration: 30, sets: 5, rest: 15, 
+                imagePreview: '🙂‍↕️' 
+            }
+        ];
+
+        // --- 2. 全域常數設定 ---
+        const SUCCESS_SOUND_URL = "https://assets.mixkit.co/sfx/preview/mixkit-video-game-win-2016.mp3";
+        const DEFAULT_LOGO = "https://cdn-icons-png.flaticon.com/512/2995/2995525.png"; // 海豚圖示
+
+        // --- 3. 輔助函式與組件 ---
+        const isImageFile = (source) => {
+            if (!source) return false;
+            return source.startsWith('data:image') || source.startsWith('http') || source.startsWith('blob:');
+        };
+
+        // 統一顯示圖片或 Emoji 的組件
+        const ExerciseMedia = ({ source, alt, className, emojiSize = "text-7xl" }) => {
+            if (isImageFile(source)) {
+                return <img src={source} alt={alt} className={`w-full h-full object-contain p-2 ${className}`} />;
+            }
+            return (
+                <div className={`flex items-center justify-center w-full h-full ${emojiSize} select-none leading-none`}>
+                    {source || '🙂'}
+                </div>
+            );
+        };
+
+        // --- 版權宣告組件 ---
+        const CopyrightFooter = ({ className = "" }) => (
+            <div className={`text-[10px] text-center text-gray-400 flex flex-col items-center gap-1 border-t pt-4 mt-auto ${className}`}>
+                <div className="font-bold text-[#D68C93]">© 2025 陳義龍. All rights reserved.</div>
+                <div className="leading-tight">
+                    本程式之設計與內容，其著作權均為 陳義龍 所有。<br/>
+                    未經授權，不得擅自重製、修改、散布或用於商業用途。<br/>
+                    <span className="flex items-center justify-center gap-1 mt-1"><Mail size={10}/> zerosparty@gmail.com</span>
+                </div>
+            </div>
+        );
+
+        // --- 4. 主應用程式組件 ---
+        function App() {
+            const [view, setView] = useState('home'); 
+            const [cases, setCases] = useState([]); 
+            const [currentCaseId, setCurrentCaseId] = useState(null);
+            const [isMenuOpen, setIsMenuOpen] = useState(false);
+            const [isInitialized, setIsInitialized] = useState(false);
+            const [appLogo, setAppLogo] = useState(DEFAULT_LOGO);
+            const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', onConfirm: null });
+            const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
+            const [selectedExercise, setSelectedExercise] = useState(null);
+            const [printNotes, setPrintNotes] = useState("");
+
+            // 初始化
+            useEffect(() => {
+                const savedCases = localStorage.getItem('oral_training_cases_v43'); // 更新版本號
+                const savedLogo = localStorage.getItem('oral_exercises_logo_v43');
+                
+                let initialCases = [];
+                if (savedCases) {
+                    try { initialCases = JSON.parse(savedCases); } catch (e) { console.error(e); }
+                }
+
+                // 若無資料，建立預設個案
+                if (initialCases.length === 0) {
+                    initialCases = [{ id: 'default-case', name: '預設訓練計畫', exercises: DEFAULT_EXERCISES_TEMPLATE }];
+                }
+
+                setCases(initialCases);
+                setCurrentCaseId(initialCases[0].id);
+                if (savedLogo) setAppLogo(savedLogo);
+                setIsInitialized(true);
+            }, []);
+
+            useEffect(() => {
+                if (isInitialized) localStorage.setItem('oral_training_cases_v43', JSON.stringify(cases));
+            }, [cases, isInitialized]);
+
+            useEffect(() => {
+                if (isInitialized) localStorage.setItem('oral_exercises_logo_v43', appLogo);
+            }, [appLogo, isInitialized]);
+
+            const currentCase = cases.find(c => c.id === currentCaseId) || cases[0] || { exercises: [] };
+            const exercises = currentCase.exercises || [];
+
+            const updateCurrentExercises = (newExercises) => {
+                setCases(prevCases => prevCases.map(c => {
+                    if (c.id === currentCaseId) return { ...c, exercises: newExercises };
+                    return c;
+                }));
+            };
+
+            const handleAddCase = (name) => {
+                if (name && name.trim()) {
+                    const newCase = { id: Date.now().toString(), name: name.trim(), exercises: DEFAULT_EXERCISES_TEMPLATE };
+                    setCases([...cases, newCase]);
+                    setCurrentCaseId(newCase.id);
+                    setIsMenuOpen(false);
+                    setView('home');
+                }
+            };
+
+            const handleSwitchCase = (id) => { setCurrentCaseId(id); setIsMenuOpen(false); setView('home'); };
+            
+            const handleDeleteCaseRequest = (id, e) => {
+                e.stopPropagation();
+                if (cases.length <= 1) { alert("至少需要保留一個個案資料！"); return; }
+                setConfirmModal({
+                    isOpen: true, title: '刪除個案', message: '確定要刪除此個案及其所有訓練資料嗎？此動作無法復原。',
+                    onConfirm: () => {
+                        const newCases = cases.filter(c => c.id !== id);
+                        setCases(newCases);
+                        if (id === currentCaseId) setCurrentCaseId(newCases[0].id);
+                        setConfirmModal({ ...confirmModal, isOpen: false });
+                    }
+                });
+            };
+
+            const handleDeleteExerciseRequest = (id) => {
+                setConfirmModal({
+                    isOpen: true, title: '刪除動作', message: '確定要刪除這個訓練動作嗎？',
+                    onConfirm: () => {
+                        const newList = exercises.filter(ex => ex.id !== id);
+                        updateCurrentExercises(newList);
+                        if (selectedExercise && selectedExercise.id === id) { setView('home'); setSelectedExercise(null); }
+                        setConfirmModal({ ...confirmModal, isOpen: false });
+                    }
+                });
+            };
+
+            const handleMoveUp = (index) => {
+                if (index === 0) return;
+                const newExercises = [...exercises];
+                [newExercises[index - 1], newExercises[index]] = [newExercises[index], newExercises[index - 1]];
+                updateCurrentExercises(newExercises);
+            };
+            const handleMoveDown = (index) => {
+                if (index === exercises.length - 1) return;
+                const newExercises = [...exercises];
+                [newExercises[index + 1], newExercises[index]] = [newExercises[index], newExercises[index + 1]];
+                updateCurrentExercises(newExercises);
+            };
+            const handleAddExercise = (newEx) => { updateCurrentExercises([...exercises, newEx]); setView('home'); };
+            
+            const handleUpdateExercise = (updatedEx) => {
+                const newExercises = exercises.map(ex => ex.id === updatedEx.id ? updatedEx : ex);
+                updateCurrentExercises(newExercises);
+                setSelectedExercise(updatedEx);
+                setView('detail');
+            };
+
+            const handleViewDetail = (ex) => { setSelectedExercise(ex); setView('detail'); };
+            const handleEditClick = (ex) => { setSelectedExercise(ex); setView('edit'); };
+            const startTraining = () => { if (exercises.length === 0) return; setCurrentExerciseIndex(0); setView('play'); };
+            const restartTraining = () => { setCurrentExerciseIndex(0); setView('home'); setTimeout(() => setView('play'), 0); };
+            const startTrainingFromDetail = (exerciseId) => {
+                const index = exercises.findIndex(ex => ex.id === exerciseId);
+                if (index !== -1) { setCurrentExerciseIndex(index); setView('play'); }
+            };
+            const handleRequestPrint = () => setView('print_setup');
+            const handleConfirmPrint = (notes) => { setPrintNotes(notes); setView('print_preview'); };
+            const handleLogoUpload = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => { setAppLogo(reader.result); alert("Logo 已更新！"); };
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            if (!isInitialized) return null;
+
+            return (
+                <div className="min-h-screen bg-[#F7F4F2] font-sans text-[#5E5052] pb-20 select-none overflow-x-hidden relative">
+                    {confirmModal.isOpen && (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+                            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-xs border border-[#D0828F]">
+                                <div className="flex flex-col items-center text-center mb-4">
+                                    <div className="w-12 h-12 bg-[#FFF0F3] rounded-full flex items-center justify-center mb-3 text-[#D0828F]"><AlertTriangle size={24} /></div>
+                                    <h3 className="text-xl font-bold text-[#5E5052]">{confirmModal.title}</h3>
+                                    <p className="text-sm text-[#8F8385] mt-2 leading-relaxed">{confirmModal.message}</p>
+                                </div>
+                                <div className="flex gap-3">
+                                    <button onClick={() => setConfirmModal({ ...confirmModal, isOpen: false })} className="flex-1 py-3 border border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 transition">取消</button>
+                                    <button onClick={confirmModal.onConfirm} className="flex-1 py-3 bg-[#D0828F] text-white rounded-xl font-bold hover:bg-[#C0707D] shadow-md transition">確定刪除</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {view !== 'print_preview' && (
+                        <>
+                            <SideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} cases={cases} currentCaseId={currentCaseId} onSwitch={handleSwitchCase} onAdd={handleAddCase} onDelete={handleDeleteCaseRequest} />
+                            <header className="bg-gradient-to-r from-[#C3A6CB] to-[#D68C93] text-white p-3 shadow-md sticky top-0 z-30 no-print">
+                                <div className="max-w-md mx-auto flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <button onClick={() => setIsMenuOpen(true)} className="p-1.5 -ml-2 mr-1 hover:bg-white/20 rounded-lg transition"><Menu size={28} /></button>
+                                        <div className="relative group cursor-pointer w-10 h-10 bg-white rounded-full p-0.5 shadow-sm overflow-hidden flex-shrink-0">
+                                            <img src={appLogo} alt="Logo" className="w-full h-full object-contain rounded-full" onClick={() => setView('home')} />
+                                            <label className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-white text-[8px] text-center leading-tight cursor-pointer">更換<br/>Logo<input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} /></label>
+                                        </div>
+                                        <div onClick={() => setView('home')} className="cursor-pointer"><h1 className="text-lg font-bold tracking-wide leading-tight">赫賀豚吞嚥訓練管家</h1><div className="text-xs opacity-90 font-normal flex items-center gap-1"><User size={10} /> {currentCase.name}</div></div>
+                                    </div>
+                                    {view !== 'home' && <button onClick={() => { if(view === 'play' && !window.confirm("訓練正在進行中，確定要返回首頁嗎？")) return; setView('home'); }} className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition backdrop-blur-sm"><Home size={20} /></button>}
+                                </div>
+                            </header>
+                        </>
+                    )}
+
+                    <main className={`max-w-md mx-auto p-4 ${view === 'print_preview' ? 'max-w-full p-0' : ''}`}>
+                        {view === 'home' && <HomeView caseName={currentCase.name} exercises={exercises} onDelete={handleDeleteExerciseRequest} onMoveUp={handleMoveUp} onMoveDown={handleMoveDown} onAdd={() => setView('add')} onStart={startTraining} onViewDetail={handleViewDetail} onPrint={handleRequestPrint} />}
+                        {view === 'print_setup' && <PrintSetupModal onConfirm={handleConfirmPrint} onCancel={() => setView('home')} />}
+                        {view === 'print_preview' && <PrintPreviewView caseName={currentCase.name} exercises={exercises} notes={printNotes} logo={appLogo} onBack={() => setView('home')} />}
+                        {view === 'detail' && selectedExercise && <DetailView exercise={selectedExercise} onBack={() => setView('home')} onEdit={() => handleEditClick(selectedExercise)} onDelete={handleDeleteExerciseRequest} onStart={() => startTrainingFromDetail(selectedExercise.id)} />}
+                        {view === 'add' && <AddExerciseView onSave={handleAddExercise} onCancel={() => setView('home')} />}
+                        {view === 'edit' && selectedExercise && <AddExerciseView initialData={selectedExercise} onSave={handleUpdateExercise} onCancel={() => setView('detail')} />}
+                        {view === 'play' && <PlayerView exercises={exercises} startIndex={currentExerciseIndex} onFinish={() => setView('finish')} onExit={() => setView('home')} />}
+                        {view === 'finish' && <FinishView onHome={() => setView('home')} onRestart={restartTraining} />}
+                    </main>
+                </div>
+            );
+        }
+
+        // ... 子組件定義 ...
+        
+        function PrintSetupModal({ onConfirm, onCancel }) {
+            const [notes, setNotes] = useState("");
+            return (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm">
+                        <h3 className="text-xl font-bold text-[#5E5052] mb-2 flex items-center gap-2"><Printer size={24} className="text-[#D68C93]" /> 準備輸出訓練單</h3>
+                        <p className="text-sm text-[#8F8385] mb-4">您可以在訓練單上加上給個案的叮嚀或注意事項。</p>
+                        <label className="block text-sm font-bold text-[#5E5052] mb-2">其他注意事項 (選填)</label>
+                        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full p-3 border border-[#C3A6CB] rounded-xl focus:ring-2 focus:ring-[#D68C93] outline-none h-32 mb-6 bg-[#F1E8B8]/20 text-[#5E5052]" placeholder="例如：請務必在飯前練習、練習時請取出假牙..." />
+                        <div className="flex gap-3">
+                            <button onClick={onCancel} className="flex-1 py-3 border border-[#C3A6CB] text-[#5E5052] rounded-xl font-bold hover:bg-[#F1E8B8]/30 transition">取消</button>
+                            <button onClick={() => onConfirm(notes)} className="flex-1 py-3 bg-[#D68C93] text-white rounded-xl font-bold hover:bg-[#C0707D] shadow-md transition flex items-center justify-center gap-2"><FileText size={18} /> 產生預覽</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function PrintPreviewView({ caseName, exercises, notes, logo, onBack }) {
+            const date = new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' });
+            const handlePrint = () => window.print();
+            return (
+                <div className="bg-gray-100 min-h-screen pb-10 flex flex-col">
+                    <div className="bg-[#5E5052] text-white p-4 flex justify-between items-center shadow-md print:hidden sticky top-0 z-50">
+                        <button onClick={onBack} className="flex items-center gap-2 text-sm hover:text-[#F1E8B8] transition"><ArrowLeft size={20} /> 返回編輯</button>
+                        <div className="font-bold">列印預覽模式</div>
+                        <button onClick={handlePrint} className="bg-[#F1E8B8] text-[#5E5052] px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-[#E0D6A0] transition shadow-sm"><Printer size={20} /> 列印 / 存為 PDF</button>
+                    </div>
+                    <div className="max-w-[210mm] mx-auto bg-white min-h-[297mm] p-[15mm] shadow-xl print:shadow-none print:p-0 print:max-w-full my-8 print:my-0 text-[#5E5052] flex flex-col print-container">
+                        <div className="flex items-center justify-between border-b-2 border-[#D68C93] pb-4 mb-6">
+                            <div className="flex items-center gap-4"><img src={logo} alt="Logo" className="w-16 h-16 object-contain" /><div><h1 className="text-2xl font-black text-[#D68C93]">赫賀豚吞嚥訓練管家</h1><p className="text-sm text-[#8F8385]">口腔機能自主訓練單</p></div></div>
+                            <div className="text-right"><div className="text-xl font-bold">{caseName}</div><div className="text-sm text-[#8F8385]">{date}</div></div>
+                        </div>
+                        <div className="space-y-6 flex-1">
+                            {exercises.length === 0 ? ( <div className="text-center py-20 text-gray-400">本訓練單尚無內容</div> ) : (
+                                exercises.map((ex, idx) => (
+                                    <div key={ex.id} className="flex gap-6 border-b border-gray-200 pb-6 break-inside-avoid">
+                                        <div className="w-32 h-32 flex-shrink-0 border border-gray-200 rounded-xl flex items-center justify-center bg-[#F9F7F5] overflow-hidden"><ExerciseMedia source={ex.imagePreview} alt={ex.name} className="w-full h-full object-contain" emojiSize="text-5xl"/></div>
+                                        <div className="flex-1"><div className="flex justify-between items-start mb-2"><h3 className="text-xl font-bold text-[#D68C93]"><span className="text-sm text-[#8F8385] mr-2">#{idx + 1}</span>{ex.name}</h3></div><p className="text-gray-700 mb-4 leading-relaxed">{ex.description || "無動作說明"}</p><div className="flex gap-4 text-sm"><div className="bg-[#FDF2F4] px-3 py-1 rounded border border-[#EAD2D8] text-[#D68C93] font-bold">持續：{ex.duration} 秒</div><div className="bg-[#FFFCE6] px-3 py-1 rounded border border-[#F1E8B8] text-[#9C8742] font-bold">休息：{ex.rest || 5} 秒</div><div className="bg-[#F2F2F2] px-3 py-1 rounded border border-gray-200 text-[#5E5052] font-bold">重複：{ex.sets} 組</div></div></div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                        {notes && ( <div className="mt-8 p-5 bg-[#FFF0F3] rounded-xl border border-[#D68C93]/30 break-inside-avoid"><h4 className="font-bold text-[#D68C93] mb-2 flex items-center gap-2"><Info size={18} /> 注意事項</h4><p className="text-[#5E5052] whitespace-pre-wrap leading-relaxed">{notes}</p></div> )}
+                        
+                        <CopyrightFooter />
+                    </div>
+                </div>
+            );
+        }
+
+        function SideMenu({ isOpen, onClose, cases, currentCaseId, onSwitch, onAdd, onDelete }) {
+            const [isAdding, setIsAdding] = useState(false);
+            const [newCaseName, setNewCaseName] = useState("");
+            const handleSubmit = (e) => { e.preventDefault(); if (newCaseName.trim()) { onAdd(newCaseName); setNewCaseName(""); setIsAdding(false); } };
+            return (
+                <>
+                    {isOpen && ( <div className="fixed inset-0 bg-[#5E5052]/50 z-40 transition-opacity backdrop-blur-sm" onClick={() => { onClose(); setIsAdding(false); }} /> )}
+                    <div className={`fixed top-0 left-0 h-full w-72 bg-[#F9F7F5] z-50 shadow-2xl transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'} flex flex-col`}>
+                        <div className="p-4 bg-[#C3A6CB] text-white flex justify-between items-center flex-shrink-0"><h2 className="text-xl font-bold flex items-center gap-2"><Users size={24} /> 個案管理</h2><button onClick={onClose} className="p-1 hover:bg-white/20 rounded-full"><X size={24} /></button></div>
+                        <div className="p-4 overflow-y-auto flex-1">
+                            <div className="text-xs font-bold text-[#8F8385] uppercase mb-3 tracking-wider">切換訓練計畫</div>
+                            <div className="space-y-2">
+                                {cases.map((c) => (
+                                    <div key={c.id} onClick={() => onSwitch(c.id)} className={`p-3 rounded-xl flex items-center justify-between group cursor-pointer border transition ${c.id === currentCaseId ? 'bg-[#FFF0F3] border-[#D68C93] text-[#D68C93]' : 'bg-white border-gray-100 text-[#5E5052] hover:bg-gray-50'}`}>
+                                        <div className="flex items-center gap-3"><div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold ${c.id === currentCaseId ? 'bg-[#D68C93] text-white' : 'bg-[#F1E8B8] text-[#9C8742]'}`}>{c.name.charAt(0)}</div><div><div className="font-bold">{c.name}</div><div className="text-xs opacity-70">{c.exercises.length} 個動作</div></div></div>
+                                        {cases.length > 1 && ( <button onClick={(e) => onDelete(c.id, e)} className="p-2 text-gray-300 hover:text-[#D68C93] hover:bg-[#FFF0F3] rounded-lg transition opacity-0 group-hover:opacity-100" title="刪除個案"><Trash2 size={16} /></button> )}
+                                        {c.id === currentCaseId && <CheckCircle size={18} className="text-[#D68C93]" />}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="p-4 bg-white border-t border-[#C3A6CB]/20 flex-shrink-0">
+                            {!isAdding ? ( <button onClick={() => setIsAdding(true)} className="w-full py-3 bg-[#5E5052] text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#4A3E40] active:scale-95 transition mb-4"><Plus size={20} /> 新增個案</button> ) : (
+                                <form onSubmit={handleSubmit} className="flex flex-col gap-2 mb-4"><input autoFocus type="text" placeholder="輸入姓名 (例如: 陳爺爺)" className="w-full p-3 border border-[#C3A6CB] rounded-xl outline-none focus:ring-2 focus:ring-[#C3A6CB]" value={newCaseName} onChange={(e) => setNewCaseName(e.target.value)} /><div className="flex gap-2"><button type="button" onClick={() => setIsAdding(false)} className="flex-1 py-2 bg-gray-100 text-gray-500 rounded-lg font-bold">取消</button><button type="submit" className="flex-1 py-2 bg-[#C3A6CB] text-white rounded-lg font-bold">確認</button></div></form>
+                            )}
+                            <CopyrightFooter />
+                        </div>
+                    </div>
+                </>
+            );
+        }
+
+        // HomeView
+        function HomeView({ caseName, exercises, onDelete, onMoveUp, onMoveDown, onAdd, onStart, onViewDetail, onPrint }) {
+            const totalDuration = exercises.reduce((acc, curr) => acc + 10 + (curr.duration + (curr.rest || 5)) * curr.sets, 0);
+            return (
+                <div className="space-y-6 animate-fade-in">
+                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-[#EAD2D8] flex justify-between items-center relative overflow-hidden">
+                        <div className="absolute -right-6 -top-6 w-24 h-24 bg-[#FFF0F3] rounded-full z-0"></div>
+                        <div className="relative z-10"><h2 className="text-lg font-bold text-[#5E5052] mb-1 flex items-center gap-2"><User size={18} className="text-[#D68C93]"/> {caseName}</h2><div className="flex gap-2 text-sm text-[#8F8385]"><span>今日訓練計畫</span>{exercises.length > 0 && ( <button onClick={onPrint} className="flex items-center gap-1 text-[#D68C93] underline hover:text-[#C0707D] text-xs ml-2 font-bold"><Printer size={12}/> 輸出 PDF / 列印</button> )}</div></div>
+                        <div className="text-right relative z-10 flex gap-4"><div className="text-right"><div className="text-2xl font-black text-[#D68C93]">{exercises.length}</div><div className="text-xs text-[#8F8385]">個動作</div></div><div className="w-px h-10 bg-gray-100"></div><div className="text-right"><div className="text-2xl font-black text-[#D68C93]">{Math.ceil(totalDuration / 60)}</div><div className="text-xs text-[#8F8385]">分鐘</div></div></div>
+                    </div>
+                    <div className="space-y-4">
+                        {exercises.map((ex, idx) => (
+                            <div key={ex.id} onClick={() => onViewDetail(ex)} className="bg-white p-3 pr-2 rounded-2xl shadow-sm border border-gray-100 flex gap-3 items-center relative overflow-hidden group hover:border-[#F1E8B8] transition cursor-pointer active:scale-[0.99]">
+                                <div className="w-20 h-20 bg-[#F9F7F5] rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden border border-[#E6E0DD] relative"><ExerciseMedia source={ex.imagePreview} alt={ex.name} className="w-full h-full object-contain" emojiSize="text-4xl" /></div>
+                                <div className="flex-1 min-w-0"><h3 className="font-bold text-lg text-[#5E5052] leading-tight mb-1 truncate">{ex.name}</h3><p className="text-sm text-[#8F8385] line-clamp-1 mb-2">{ex.description}</p><div className="flex flex-wrap gap-1.5 text-xs font-medium text-[#5E5052]"><span className="bg-[#FFF0F3] px-1.5 py-0.5 rounded-md flex items-center gap-1 text-[#D68C93] border border-[#D68C93]/20"><Clock size={10}/> {ex.duration}s</span><span className="bg-[#FFFCE6] px-1.5 py-0.5 rounded-md flex items-center gap-1 text-[#9C8742] border border-[#F1E8B8]"><Coffee size={10}/> {ex.rest || 5}s</span><span className="bg-[#F2F2F2] px-1.5 py-0.5 rounded-md flex items-center gap-1 text-[#5E5052]"><Repeat size={10}/> {ex.sets}</span></div></div>
+                                <div className="flex flex-col gap-1 items-center justify-center pl-2 border-l border-gray-100 relative z-20" onClick={(e) => { e.stopPropagation(); }}>
+                                   <button type="button" onClick={(e) => { e.stopPropagation(); onMoveUp(idx); }} disabled={idx === 0} className={`p-1.5 rounded-lg transition ${idx === 0 ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:bg-[#F9F7F5] hover:text-[#C3A6CB]'}`}><ArrowUp size={18} className="pointer-events-none" /></button>
+                                   <button type="button" onClick={(e) => { e.stopPropagation(); onDelete(ex.id); }} className="p-1.5 rounded-lg text-[#D68C93] hover:text-red-600 hover:bg-[#FFF0F3] transition relative z-30" title="刪除"><Trash2 size={18} className="pointer-events-none" /></button>
+                                   <button type="button" onClick={(e) => { e.stopPropagation(); onMoveDown(idx); }} disabled={idx === exercises.length - 1} className={`p-1.5 rounded-lg transition ${idx === exercises.length - 1 ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:bg-[#F9F7F5] hover:text-[#C3A6CB]'}`}><ArrowDown size={18} className="pointer-events-none" /></button>
+                                </div>
+                            </div>
+                        ))}
+                        {exercises.length === 0 && ( <div className="flex flex-col items-center justify-center py-12 text-[#8F8385] bg-white rounded-2xl border-2 border-dashed border-gray-200"><Info size={48} className="mb-4 opacity-50" /><p>目前沒有訓練動作</p><p className="text-sm">請點擊下方按鈕新增</p></div> )}
+                    </div>
+                    <div className="h-24"></div>
+                    <div className="fixed bottom-6 left-0 right-0 px-4 max-w-md mx-auto flex gap-3 z-30">
+                        <button onClick={onAdd} className="flex-1 bg-white border border-[#F1E8B8] text-[#C4A455] py-3.5 rounded-full font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition hover:bg-[#FFFDF5]"><Plus size={20} /> 新增動作</button>
+                        <button onClick={onStart} disabled={exercises.length === 0} className={`flex-[1.5] py-3.5 rounded-full font-bold shadow-lg shadow-[#EAD2D8] flex items-center justify-center gap-2 active:scale-95 transition ${exercises.length === 0 ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none' : 'bg-gradient-to-r from-[#D68C93] to-[#C0707D] text-white'}`}><Play size={20} fill="currentColor" /> 開始訓練</button>
+                    </div>
+                </div>
+            );
+        }
+
+        // DetailView
+        function DetailView({ exercise, onBack, onDelete, onEdit, onStart }) {
+            return (
+                <div className="space-y-6 animate-fade-in pb-20">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2"><button onClick={onBack} className="p-2 hover:bg-white rounded-full transition text-[#5E5052]"><ArrowLeft size={24} /></button><h2 className="text-xl font-bold text-[#5E5052]">動作詳情</h2></div>
+                        <button onClick={onEdit} className="p-2 text-[#D68C93] hover:bg-white rounded-full transition" title="編輯動作"><Edit3 size={24} /></button>
+                    </div>
+                    <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden relative">
+                        <div className="aspect-square w-full bg-[#F9F7F5] flex items-center justify-center"><ExerciseMedia source={exercise.imagePreview} alt={exercise.name} className="w-full h-full object-contain" emojiSize="text-9xl" /></div>
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#5E5052]/80 to-transparent p-6 pt-12 text-white"><h1 className="text-3xl font-bold mb-1">{exercise.name}</h1></div>
+                    </div>
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
+                        <div><h3 className="text-sm font-bold text-[#8F8385] mb-2 uppercase tracking-wide">動作說明</h3><p className="text-[#5E5052] text-lg leading-relaxed bg-[#FFF0F3] p-4 rounded-xl border border-[#EAD2D8]">{exercise.description || "無說明"}</p></div>
+                        <div><h3 className="text-sm font-bold text-[#8F8385] mb-3 uppercase tracking-wide">訓練設定</h3><div className="grid grid-cols-3 gap-3"><div className="bg-[#F9F9F9] p-3 rounded-xl text-center border border-gray-100"><Clock className="w-6 h-6 mx-auto mb-1 text-[#D68C93]" /><div className="text-xs text-[#8F8385]">持續</div><div className="font-bold text-lg text-[#5E5052]">{exercise.duration} <span className="text-xs">秒</span></div></div><div className="bg-[#F9F9F9] p-3 rounded-xl text-center border border-gray-100"><Coffee className="w-6 h-6 mx-auto mb-1 text-[#E6C67E]" /><div className="text-xs text-[#8F8385]">休息</div><div className="font-bold text-lg text-[#5E5052]">{exercise.rest || 5} <span className="text-xs">秒</span></div></div><div className="bg-[#F9F9F9] p-3 rounded-xl text-center border border-gray-100"><Repeat className="w-6 h-6 mx-auto mb-1 text-[#8F8385]" /><div className="text-xs text-[#8F8385]">組數</div><div className="font-bold text-lg text-[#5E5052]">{exercise.sets} <span className="text-xs">次</span></div></div></div></div>
+                    </div>
+                    <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur border-t border-gray-100 max-w-md mx-auto flex gap-4 z-20">
+                         <button onClick={() => onDelete(exercise.id)} className="w-16 py-3.5 bg-[#F2F2F2] text-[#D68C93] rounded-xl font-bold flex items-center justify-center hover:bg-[#EAD2D8] transition" title="刪除"><Trash2 size={24} /></button>
+                         <button onClick={onStart} className="flex-1 py-3.5 bg-gradient-to-r from-[#D68C93] to-[#C0707D] text-white rounded-xl font-bold text-xl shadow-lg hover:shadow-[#EAD2D8] flex items-center justify-center gap-2 active:scale-95 transition"><Play size={24} fill="currentColor" /> 開始執行</button>
+                    </div>
+                </div>
+            );
+        }
+
+        // AddExerciseView
+        function AddExerciseView({ onSave, onCancel, initialData }) {
+            const [name, setName] = useState(initialData ? initialData.name : '');
+            const [desc, setDesc] = useState(initialData ? initialData.description : '');
+            const [duration, setDuration] = useState(initialData ? initialData.duration : 10);
+            const [rest, setRest] = useState(initialData ? initialData.rest : 5);
+            const [sets, setSets] = useState(initialData ? initialData.sets : 5);
+            const [imagePreview, setImagePreview] = useState(initialData ? initialData.imagePreview : null);
+            const [errorMsg, setErrorMsg] = useState('');
+            const handleImageChange = (e) => {
+                const file = e.target.files[0];
+                setErrorMsg('');
+                if (file) {
+                    if (!file.type.startsWith('image/')) { setErrorMsg('格式錯誤'); return; }
+                    if (file.size > 3 * 1024 * 1024) { setErrorMsg('圖片太大了(>3MB)'); return; }
+                    const reader = new FileReader();
+                    reader.onloadend = () => setImagePreview(reader.result);
+                    reader.readAsDataURL(file);
+                }
+            };
+            const handleSubmit = (e) => { e.preventDefault(); if (!name.trim()) return; onSave({ id: initialData ? initialData.id : Date.now().toString(), name, description: desc, duration: Number(duration), rest: Number(rest), sets: Number(sets), imagePreview }); };
+            const CounterInput = ({ label, value, setValue, icon: Icon, theme }) => {
+                const themeStyles = { orange: "border-[#EAD2D8] bg-[#FFF0F3] text-[#D68C93]", blue: "border-[#F1E8B8] bg-[#FFFCE6] text-[#9C8742]", gray: "border-gray-200 bg-[#F9F7F5] text-[#5E5052]" };
+                return (
+                    <div className="flex-1"><label className="block text-xs font-bold text-[#8F8385] mb-1 flex items-center gap-1 uppercase tracking-wider">{Icon && <Icon size={12}/>} {label}</label><div className={`flex items-center border rounded-xl overflow-hidden shadow-sm ${themeStyles[theme]}`}><button type="button" onClick={() => setValue(v => Math.max(1, v-1))} className="w-10 py-3 hover:bg-black/5 active:bg-black/10 transition font-bold text-lg">-</button><input type="number" value={value} onChange={e => setValue(Number(e.target.value))} className="w-full text-center p-3 outline-none bg-transparent font-bold text-lg" /><button type="button" onClick={() => setValue(v => v+1)} className="w-10 py-3 hover:bg-black/5 active:bg-black/10 transition font-bold text-lg">+</button></div></div>
+                );
+            };
+            return (
+                <div className="bg-white rounded-2xl shadow-lg p-6 animate-fade-in pb-28">
+                    <h2 className="text-2xl font-bold mb-6 text-[#5E5052] border-b pb-4">{initialData ? '編輯訓練動作' : '新增訓練動作'}</h2>
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div><label className="block text-sm font-bold text-[#5E5052] mb-2">動作名稱 <span className="text-[#D68C93]">*</span></label><input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full p-4 bg-[#F9F7F5] border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D68C93] focus:bg-white outline-none transition font-medium text-[#5E5052]" placeholder="例如：舌上抬運動" required /></div>
+                        <div><label className="block text-sm font-bold text-[#5E5052] mb-2">動作說明</label><textarea value={desc} onChange={e => setDesc(e.target.value)} className="w-full p-4 bg-[#F9F7F5] border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D68C93] focus:bg-white outline-none transition text-[#5E5052]" placeholder="簡單描述如何執行..." rows="2" /></div>
+                        <div className="grid grid-cols-2 gap-4"><CounterInput label="動作(秒)" value={duration} setValue={setDuration} icon={Clock} theme="orange" /><CounterInput label="休息(秒)" value={rest} setValue={setRest} icon={Coffee} theme="blue" /></div>
+                        <div className="w-1/2 pr-2"><CounterInput label="組數(次)" value={sets} setValue={setSets} icon={Repeat} theme="gray" /></div>
+                        <div>
+                            <label className="block text-sm font-bold text-[#5E5052] mb-2 flex justify-between"><span>動作示意圖</span><span className="text-xs font-normal text-[#D68C93] bg-[#FFF0F3] px-2 py-0.5 rounded border border-[#EAD2D8]">支援 GIF 或 Emoji</span></label>
+                            <div className={`border-2 border-dashed rounded-xl p-4 text-center transition cursor-pointer relative bg-[#F9F7F5] group hover:border-[#F1E8B8] ${imagePreview ? 'border-[#D68C93]' : 'border-gray-300'}`}><input type="file" accept="image/png, image/jpeg, image/gif, image/webp" onChange={handleImageChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />{imagePreview ? (<div className="relative h-48 w-full"><ExerciseMedia source={imagePreview} className="rounded-lg" emojiSize="text-6xl"/><div className="absolute inset-0 flex items-center justify-center bg-black/40 text-white font-medium opacity-0 group-hover:opacity-100 transition rounded-lg backdrop-blur-sm">點擊更換圖片</div></div>) : (<div className="py-8 text-[#8F8385] flex flex-col items-center group-hover:text-[#E6C67E] transition"><div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm mb-3 group-hover:scale-110 transition"><ImageIcon size={24} /></div><span className="font-medium">點擊上傳圖片或 GIF</span><span className="text-xs mt-1 opacity-70">建議比例 1:1 或 4:3</span></div>)}</div>
+                            {errorMsg && <div className="text-red-500 text-sm mt-2 flex items-center gap-1"><AlertCircle size={14}/> {errorMsg}</div>}
+                        </div>
+                        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur border-t border-gray-100 max-w-md mx-auto flex gap-4 z-20"><button type="button" onClick={onCancel} className="flex-1 py-3.5 border border-gray-300 rounded-xl font-bold text-[#5E5052] hover:bg-gray-50 transition">取消</button><button type="submit" className="flex-1 py-3.5 bg-gradient-to-r from-[#D68C93] to-[#C0707D] rounded-xl font-bold text-white shadow-lg hover:shadow-[#EAD2D8] flex justify-center items-center gap-2 transition active:scale-95"><Save size={20} /> 儲存設定</button></div>
+                    </form>
+                </div>
+            );
+        }
+        
+        // PlayerView
+        function PlayerView({ exercises, startIndex, onFinish, onExit }) {
+            const [currentIndex, setCurrentIndex] = useState(startIndex);
+            const [currentSet, setCurrentSet] = useState(1);
+            const [timeLeft, setTimeLeft] = useState(10); 
+            const [isPaused, setIsPaused] = useState(false);
+            const [phase, setPhase] = useState('prepare'); 
+            const currentExercise = exercises[currentIndex];
+            const restDuration = currentExercise.rest || 5; 
+            const timerRef = useRef(null);
+            useEffect(() => { setPhase('prepare'); setTimeLeft(10); setCurrentSet(1); setIsPaused(false); }, [currentIndex]);
+            useEffect(() => {
+                if (isPaused) return;
+                timerRef.current = setInterval(() => { setTimeLeft((prev) => { if (prev <= 1) { handleTimerTickZero(); return 0; } return prev - 1; }); }, 1000);
+                return () => clearInterval(timerRef.current);
+            }, [phase, isPaused, currentSet, currentIndex]);
+            const handleTimerTickZero = () => {
+                clearInterval(timerRef.current);
+                switch(phase) {
+                    case 'prepare': setPhase('exercise'); setTimeLeft(currentExercise.duration); break;
+                    case 'exercise': if (currentSet < currentExercise.sets) { setPhase('rest'); setTimeLeft(restDuration); } else { goToNextExercise(); } break;
+                    case 'rest': setCurrentSet(prev => prev + 1); setPhase('exercise'); setTimeLeft(currentExercise.duration); break;
+                }
+            };
+            const goToNextExercise = () => { if (currentIndex < exercises.length - 1) { setCurrentIndex(prev => prev + 1); } else { onFinish(); } };
+            const skipExercise = () => { clearInterval(timerRef.current); goToNextExercise(); };
+            const getPhaseInfo = () => {
+                switch(phase) {
+                    case 'prepare': return { bg: 'bg-[#FFF9E6]', text: 'text-[#9C8742]', border: 'border-[#E6C67E]', icon: '⏱️', title: '準備開始', sub: `即將開始 (10秒)：${currentExercise.name}` };
+                    case 'rest': return { bg: 'bg-[#F9F7F5]', text: 'text-[#5E5052]', border: 'border-[#E6E0DD]', icon: '☕', title: '休息放鬆', sub: `深呼吸，準備第 ${currentSet + 1} 組` };
+                    default: return { bg: 'bg-white', text: 'text-[#5E5052]', border: 'border-[#D68C93]', icon: '🔥', title: currentExercise.name, sub: '動作執行中' };
+                }
+            };
+            const info = getPhaseInfo();
+            return (
+                <div className="flex flex-col h-[calc(100vh-100px)] animate-fade-in relative">
+                    <div className="flex gap-1.5 mb-6 px-1">{exercises.map((_, idx) => (<div key={idx} className={`h-2.5 flex-1 rounded-full transition-all duration-500 shadow-sm ${idx < currentIndex ? 'bg-[#D68C93]' : idx === currentIndex ? 'bg-[#F1E8B8]' : 'bg-gray-200'}`} />))}</div>
+                    <div className="flex justify-between items-center mb-2 px-2"><h2 className="text-sm font-bold text-[#8F8385] bg-white px-3 py-1 rounded-full shadow-sm">動作 {currentIndex + 1} / {exercises.length}</h2><button onClick={onExit} className="text-sm text-[#8F8385] hover:text-[#D68C93] underline decoration-1 underline-offset-4">結束訓練</button></div>
+                    <div key={`${currentIndex}-${phase}`} className={`flex-1 flex flex-col items-center justify-center p-6 rounded-3xl border-4 shadow-xl transition-all duration-500 relative overflow-hidden ${info.bg} ${info.text} ${info.border}`}>
+                        <div className="absolute top-0 left-0 w-32 h-32 bg-current opacity-5 rounded-full -translate-x-1/2 -translate-y-1/2 blur-2xl pointer-events-none"></div>
+                        <div className="absolute bottom-0 right-0 w-40 h-40 bg-current opacity-5 rounded-full translate-x-1/2 translate-y-1/2 blur-2xl pointer-events-none"></div>
+                        <div className="mb-4 text-2xl font-black opacity-90 flex items-center gap-2 uppercase tracking-widest relative z-10"><span className="text-3xl animate-bounce">{info.icon}</span> {info.title}</div>
+                        <div className="w-full max-w-xs aspect-square mb-6 bg-white rounded-2xl flex items-center justify-center overflow-hidden border-4 border-white/50 shadow-sm relative z-10">{phase === 'rest' ? (<div className="animate-pulse flex flex-col items-center justify-center text-[#E6C67E]"><Coffee size={80} className="opacity-60 mb-2 text-[#C4A455]" /><span className="font-bold text-lg text-[#9C8742]">休息中</span></div>) : (<ExerciseMedia source={currentExercise.imagePreview} alt="exercise" className="w-full h-full object-contain" emojiSize="text-9xl" />)}</div>
+                        <p className="text-center font-medium opacity-80 mb-4 max-w-xs text-lg px-4 py-1 rounded-lg bg-white/30 backdrop-blur-sm relative z-10">{phase === 'exercise' ? currentExercise.description : info.sub}</p>
+                        <div className="text-8xl font-black tabular-nums tracking-tighter mb-4 scale-110 drop-shadow-sm font-mono relative z-10">{timeLeft}<span className="text-2xl font-bold ml-2 opacity-50 absolute bottom-4">秒</span></div>
+                        <div className="text-base font-bold px-5 py-2.5 bg-white/50 backdrop-blur rounded-full shadow-sm flex items-center gap-2 relative z-10"><Repeat size={16} />第 <span className="text-xl text-current">{currentSet}</span> 組 / 共 {currentExercise.sets} 組</div>
+                    </div>
+                    <div className="mt-6 flex items-center gap-4 px-2"><button onClick={() => setIsPaused(!isPaused)} className={`flex-[2] py-4 rounded-2xl font-bold text-xl shadow-lg flex items-center justify-center gap-3 active:scale-95 transition ${isPaused ? 'bg-[#5E5052] text-white hover:bg-[#4A3E40]' : 'bg-[#E6C67E] text-white hover:bg-[#D4B46D]'}`}>{isPaused ? <><Play fill="currentColor" /> 繼續訓練</> : <><Pause fill="currentColor" /> 暫停計時</>}</button><button onClick={skipExercise} className="flex-1 py-4 bg-white text-[#8F8385] border border-gray-200 rounded-2xl font-bold shadow-md hover:bg-gray-50 active:scale-95 transition flex items-center justify-center gap-2"><SkipForward size={20} fill="currentColor"/> 跳過</button></div>
+                </div>
+            );
+        }
+
+        // FinishView
+        function FinishView({ onHome, onRestart }) {
+            const audioRef = useRef(null);
+            useEffect(() => { if (audioRef.current) { audioRef.current.volume = 0.5; audioRef.current.play().catch(e => console.log("Autoplay blocked:", e)); } }, []);
+            return (
+                <div className="flex flex-col items-center justify-center py-12 animate-fade-in h-[80vh]">
+                    <audio ref={audioRef} src={SUCCESS_SOUND_URL} preload="auto" />
+                    <div className="relative"><div className="absolute inset-0 bg-[#D68C93] rounded-full blur-xl opacity-20 animate-pulse"></div><div className="w-40 h-40 bg-gradient-to-br from-[#FFF0F3] to-[#F9DCE2] rounded-full flex items-center justify-center mb-8 text-[#D68C93] shadow-xl border-4 border-white relative z-10"><CheckCircle size={80} strokeWidth={2.5} /></div></div>
+                    <h2 className="text-4xl font-black text-[#5E5052] mb-4 tracking-tight">訓練完成！</h2>
+                    <p className="text-[#8F8385] mb-12 text-center text-lg max-w-xs leading-relaxed">太棒了！<br/>您已經完成了今日的口腔機能訓練。<br/><span className="text-[#D68C93] font-bold">持之以恆，健康加分。</span></p>
+                    <div className="w-full space-y-4 px-4"><button onClick={onHome} className="w-full py-4 bg-gradient-to-r from-[#D68C93] to-[#C0707D] text-white rounded-2xl font-bold text-xl shadow-lg hover:shadow-[#EAD2D8] flex items-center justify-center gap-3 active:scale-95 transition transform"><Home size={24} /> 返回首頁</button><button onClick={onRestart} className="w-full py-4 bg-white border-2 border-[#E6E0DD] text-[#5E5052] rounded-2xl font-bold text-xl hover:bg-[#F9F7F5] flex items-center justify-center gap-3 active:scale-95 transition"><RotateCcw size={24} /> 再做一次</button></div>
+                </div>
+            );
+        }
+
+        // Render App
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
