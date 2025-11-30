@@ -72,7 +72,7 @@
             ChevronRight, ChevronLeft, Users, Printer, FileText, AlertTriangle, Edit3, 
             Copyright, Mail, Volume2, VolumeX, Minus, Settings2, Loader2, Smile, Meh, Frown, PenTool,
             Calendar as CalendarIcon, Download, Activity, TrendingUp, UploadCloud, DownloadCloud, ShieldCheck,
-            Youtube
+            Youtube, Heart, BookOpen
         } from 'https://esm.sh/lucide-react@0.294.0';
 
         // --- 自定義節拍器 SVG 圖示 ---
@@ -113,11 +113,10 @@
             });
         };
 
-        // --- 2. YouTube ID 提取工具 (增強相容性版) ---
+        // --- 2. YouTube ID 提取工具 ---
         const getYouTubeID = (url) => {
             if (!url || typeof url !== 'string') return null;
             const cleanUrl = url.trim();
-            // 支援 m.youtube, www.youtube, youtu.be, shorts, embed 等各種格式
             const regExp = /^(?:https?:\/\/)?(?:www\.|m\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})(?:[\?&].*)?$/;
             const match = cleanUrl.match(regExp);
             return match ? match[1] : null;
@@ -125,15 +124,15 @@
 
         // --- 3. 預設動作資料 ---
         const DEFAULT_EXERCISES_TEMPLATE = [
-            { id: 'ex-1', name: '舌頭前後運動', description: '舌頭向前伸（越長越好），再快速收回。', duration: 15, sets: 5, rest: 5, imagePreview: '😛' },
-            { id: 'ex-2', name: '舌頭左右運動', description: '舌頭伸出往左右嘴角移動。', duration: 20, sets: 5, rest: 5, imagePreview: '⬅️➡️' },
-            { id: 'ex-3', name: '舌上抬運動', description: '舌頭伸出往上翹（舌頭去舔鼻子）。', duration: 10, sets: 5, rest: 5, imagePreview: '⬆️' },
-            { id: 'ex-4', name: '張嘴運動', description: '嘴巴盡力張開。', duration: 15, sets: 5, rest: 5, imagePreview: '😲' },
-            { id: 'ex-5', name: '微笑運動', description: '牙齒閉合，露齒微笑', duration: 15, sets: 5, rest: 5, imagePreview: '😁' },
-            { id: 'ex-6', name: '嘟嘴運動', description: '用力噘起嘴。', duration: 15, sets: 5, rest: 5, imagePreview: '😗' },
-            { id: 'ex-7', name: 'Hawk發聲運動', description: '吸一口氣，然後說出「厚科」這個詞，並且「科」要拉長音持續約4秒鐘。', duration: 20, sets: 5, rest: 10, imagePreview: '🗣️' },
-            { id: 'ex-8', name: 'Masako運動', description: '舌頭往前伸，用牙齒輕輕地含著，接著用力吞口水，重複吞3～5次。', duration: 15, sets: 5, rest: 10, imagePreview: '🙂' },
-            { id: 'ex-9', name: 'CTAR運動', description: '坐直或站直，肩膀後收，將彈力球放在下巴底下夾著，下巴用力向下壓住球。', duration: 30, sets: 5, rest: 15, imagePreview: '🙂‍↕️' }
+            { id: 'ex-1', name: '舌頭前後運動', description: '舌頭向前伸（越長越好），再快速收回。', duration: 15, sets: 5, rest: 5, imagePreview: 'https://raw.githubusercontent.com/zerosparty/images/refs/heads/main/01.jpg' },
+            { id: 'ex-2', name: '舌頭左右運動', description: '舌頭伸出往左右嘴角移動。', duration: 20, sets: 5, rest: 5, imagePreview: 'https://raw.githubusercontent.com/zerosparty/images/refs/heads/main/02.png' },
+            { id: 'ex-3', name: '舌上抬運動', description: '舌頭伸出往上翹（舌頭去舔鼻子）。', duration: 10, sets: 5, rest: 5, imagePreview: 'https://raw.githubusercontent.com/zerosparty/images/refs/heads/main/03.jpg' },
+            { id: 'ex-4', name: '張嘴運動', description: '嘴巴盡力張開。', duration: 15, sets: 5, rest: 5, imagePreview: 'https://raw.githubusercontent.com/zerosparty/images/refs/heads/main/04.jpg' },
+            { id: 'ex-5', name: '微笑運動', description: '牙齒閉合，露齒微笑', duration: 15, sets: 5, rest: 5, imagePreview: 'https://raw.githubusercontent.com/zerosparty/images/refs/heads/main/05.jpg' },
+            { id: 'ex-6', name: '嘟嘴運動', description: '用力噘起嘴。', duration: 15, sets: 5, rest: 5, imagePreview: 'https://raw.githubusercontent.com/zerosparty/images/refs/heads/main/06.jpg' },
+            { id: 'ex-7', name: 'Hawk發聲運動', description: '吸一口氣，然後說出「厚科」這個詞，並且「科」要拉長音持續約4秒鐘。', duration: 20, sets: 5, rest: 10, imagePreview: 'https://raw.githubusercontent.com/zerosparty/images/refs/heads/main/07.JPG' },
+            { id: 'ex-8', name: 'Masako運動', description: '舌頭往前伸，用牙齒輕輕地含著，接著用力吞口水，重複吞3～5次。', duration: 15, sets: 5, rest: 10, imagePreview: 'https://raw.githubusercontent.com/zerosparty/images/refs/heads/main/08.JPG' },
+            { id: 'ex-9', name: 'CTAR運動', description: '坐直或站直，肩膀後收，將彈力球放在下巴底下夾著，下巴用力向下壓住球。', duration: 30, sets: 5, rest: 15, imagePreview: 'https://raw.githubusercontent.com/zerosparty/images/refs/heads/main/09.png' }
         ];
 
         const SUCCESS_SOUND_URL = "https://assets.mixkit.co/sfx/preview/mixkit-video-game-win-2016.mp3";
@@ -149,47 +148,139 @@
             return <div className={`flex items-center justify-center w-full h-full ${emojiSize} select-none leading-none`}>{source || '🙂'}</div>;
         };
 
-        const CopyrightFooter = ({ className = "" }) => (
+        // --- 版權宣告組件 (修正：關於按鈕樣式) ---
+        const CopyrightFooter = ({ className = "", onAboutClick }) => (
             <div className={`text-[10px] text-center text-gray-400 flex flex-col items-center gap-1 border-t pt-4 mt-auto ${className}`}>
+                
+                {/* 按鈕區域 - 移動到上方更顯眼 */}
+                {onAboutClick && (
+                    <button onClick={onAboutClick} className="mb-3 w-full py-2 bg-white border border-[#D68C93] text-[#D68C93] rounded-lg text-xs font-bold hover:bg-[#FFF0F3] transition flex items-center justify-center gap-2 shadow-sm">
+                        <Info size={14} /> 關於與致謝
+                    </button>
+                )}
+
                 <div className="font-bold text-[#D68C93]">© 2025 陳義龍. All rights reserved.</div>
-                <div className="leading-tight">本程式之設計與內容，其著作權均為 陳義龍 所有。<br/>未經授權，不得擅自重製、修改、散布或用於商業用途。<br/><span className="flex items-center justify-center gap-1 mt-1"><Mail size={10}/> zerosparty@gmail.com</span></div>
+                <div className="leading-tight">
+                    本程式之設計與內容，其著作權均為 陳義龍 所有。<br/>
+                    未經授權，不得擅自重製、修改、散布或用於商業用途。<br/>
+                    <span className="flex items-center justify-center gap-1 mt-1"><Mail size={10}/> zerosparty@gmail.com</span>
+                </div>
             </div>
         );
+
+        // --- 關於與致謝頁面 ---
+        function AboutView({ onBack, logo }) {
+            useEffect(() => { window.scrollTo(0, 0); }, []);
+            
+            return (
+                <div className="space-y-6 animate-fade-in pb-20">
+                    <div className="flex items-center gap-2 mb-4">
+                        <button onClick={onBack} className="p-2 hover:bg-white rounded-full transition text-[#5E5052]">
+                            <ArrowLeft size={24} />
+                        </button>
+                        <h2 className="text-xl font-bold text-[#5E5052]">關於本程式</h2>
+                    </div>
+
+                    <div className="flex flex-col items-center justify-center py-8">
+                        <div className="w-24 h-24 bg-white rounded-full p-1 shadow-sm mb-4 overflow-hidden">
+                            <img 
+                                src={logo} 
+                                alt="Logo" 
+                                className="w-full h-full object-contain rounded-full"
+                                style={logo.includes('flaticon') ? { filter: PINK_FILTER } : {}} 
+                            />
+                        </div>
+                        <h1 className="text-2xl font-black text-[#D68C93] mb-1">赫賀豚吞嚥訓練管家</h1>
+                        <p className="text-sm text-[#8F8385]">v1.0.0 (2025)</p>
+                    </div>
+
+                    {/* 小工具介紹區塊 */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                        <h3 className="font-bold text-[#5E5052] mb-3 flex items-center gap-2 text-lg">
+                            <BookOpen size={20} className="text-[#D68C93]" /> 小工具介紹
+                        </h3>
+                        <p className="text-[#5E5052] text-base leading-relaxed text-justify">
+                            「赫賀豚吞嚥訓練管家」是一款<strong>專為語言治療師開發</strong>的數位復健輔助小工具。
+                            <br/><br/>
+                            我們希望能透過科技的力量，解決傳統紙本衛教單難以呈現動作動態細節、以及難以追蹤居家練習成效的痛點。此系統整合了個別化菜單設定、多媒體示範、語音節拍導引以及自動化歷程紀錄，旨在成為治療師與個案之間最可靠的橋樑，提升居家復健的品質與依從性。
+                        </p>
+                    </div>
+
+                    {/* 致謝區塊 */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                        <h3 className="font-bold text-[#5E5052] mb-4 flex items-center gap-2 text-lg">
+                            <Heart size={20} className="text-[#D68C93] fill-[#D68C93]" /> 特別感謝
+                        </h3>
+                        <div className="text-[#5E5052] text-base leading-relaxed space-y-4 text-justify">
+                            <p>
+                                特此向 <strong>屏東縣語言治療師公會－尹凱笛 理事長</strong>、<strong>屏東基督教醫院－林學民 語言治療師</strong>，以及 <strong>屏東縣語言治療師公會全體成員</strong> 致上最誠摯的感謝。
+                            </p>
+                            <p>
+                                感謝各位在本 Web APP 開發過程中所提供的專業指導、寶貴建議與無私支持，使本系統得以更加完善與實用。
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="bg-[#F9F7F5] rounded-2xl p-6 text-center space-y-2 mt-4">
+                         <p className="text-xs text-gray-500 uppercase tracking-widest mb-2">Designed & Developed by</p>
+                         <p className="font-bold text-[#5E5052] text-lg">陳義龍 語言治療師</p>
+                         <p className="text-sm text-[#D68C93]">zerosparty@gmail.com</p>
+                    </div>
+                    
+                     <div className="text-center text-[10px] text-gray-300 mt-8">
+                        © 2025 Hehe Dolphin Swallow Training Manager. All rights reserved.
+                    </div>
+                </div>
+            );
+        }
 
         // --- 月曆組件 ---
         const CalendarWidget = ({ logs }) => {
             const [currentDate, setCurrentDate] = useState(new Date());
+            
             const getDaysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
             const getFirstDayOfMonth = (date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+
             const prevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
             const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+
             const daysInMonth = getDaysInMonth(currentDate);
             const firstDay = getFirstDayOfMonth(currentDate);
             const today = new Date();
+
             const days = [];
             for (let i = 0; i < firstDay; i++) days.push(null);
             for (let i = 1; i <= daysInMonth; i++) days.push(i);
+
             const hasLog = (day) => {
                 if (!day) return false;
                 return logs.some(log => {
                     const logDate = new Date(log.date);
-                    return logDate.getDate() === day && logDate.getMonth() === currentDate.getMonth() && logDate.getFullYear() === currentDate.getFullYear();
+                    return logDate.getDate() === day && 
+                           logDate.getMonth() === currentDate.getMonth() && 
+                           logDate.getFullYear() === currentDate.getFullYear();
                 });
             };
+
             const monthlyCount = logs.filter(log => {
                 const logDate = new Date(log.date);
-                return logDate.getMonth() === currentDate.getMonth() && logDate.getFullYear() === currentDate.getFullYear();
+                return logDate.getMonth() === currentDate.getMonth() && 
+                       logDate.getFullYear() === currentDate.getFullYear();
             }).length;
 
             return (
                 <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-6">
                     <div className="flex justify-between items-center mb-4">
                         <button onClick={prevMonth} className="p-1 hover:bg-gray-100 rounded-full text-gray-400"><ChevronLeft size={20}/></button>
-                        <h3 className="font-bold text-[#5E5052] text-lg">{currentDate.getFullYear()}年 {currentDate.getMonth() + 1}月</h3>
+                        <h3 className="font-bold text-[#5E5052] text-lg">
+                            {currentDate.getFullYear()}年 {currentDate.getMonth() + 1}月
+                        </h3>
                         <button onClick={nextMonth} className="p-1 hover:bg-gray-100 rounded-full text-gray-400"><ChevronRight size={20}/></button>
                     </div>
                     <div className="grid grid-cols-7 gap-1 text-center mb-2">
-                        {['日', '一', '二', '三', '四', '五', '六'].map(d => (<div key={d} className="text-xs font-bold text-gray-400 py-1">{d}</div>))}
+                        {['日', '一', '二', '三', '四', '五', '六'].map(d => (
+                            <div key={d} className="text-xs font-bold text-gray-400 py-1">{d}</div>
+                        ))}
                     </div>
                     <div className="grid grid-cols-7 gap-1">
                         {days.map((day, idx) => {
@@ -197,14 +288,24 @@
                             const active = hasLog(day);
                             return (
                                 <div key={idx} className="aspect-square flex items-center justify-center relative">
-                                    {day && (<div className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium transition ${active ? 'bg-[#D68C93] text-white font-bold shadow-sm' : isToday ? 'bg-[#FFF0F3] text-[#D68C93] border border-[#D68C93]' : 'text-gray-600'}`}>{day}</div>)}
+                                    {day && (
+                                        <div className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium transition
+                                            ${active ? 'bg-[#D68C93] text-white font-bold shadow-sm' : 
+                                              isToday ? 'bg-[#FFF0F3] text-[#D68C93] border border-[#D68C93]' : 'text-gray-600'}`}>
+                                            {day}
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })}
                     </div>
                     <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
                         <div className="text-xs text-gray-400">本月累計打卡</div>
-                        <div className="flex items-center gap-2"><TrendingUp size={16} className="text-[#D68C93]"/><span className="text-xl font-black text-[#5E5052]">{monthlyCount}</span><span className="text-xs text-gray-500">次</span></div>
+                        <div className="flex items-center gap-2">
+                            <TrendingUp size={16} className="text-[#D68C93]"/>
+                            <span className="text-xl font-black text-[#5E5052]">{monthlyCount}</span>
+                            <span className="text-xs text-gray-500">次</span>
+                        </div>
                     </div>
                 </div>
             );
@@ -225,27 +326,36 @@
             const [pendingTrainingOptions, setPendingTrainingOptions] = useState(null);
 
             useEffect(() => {
-                const savedCases = localStorage.getItem('oral_training_cases_v43');
-                const savedLogo = localStorage.getItem('oral_exercises_logo_v43');
+                const savedCases = localStorage.getItem('oral_training_cases_v45');
+                const savedLogo = localStorage.getItem('oral_exercises_logo_v45');
                 let initialCases = [];
-                if (savedCases) { try { initialCases = JSON.parse(savedCases); } catch (e) { console.error(e); } }
-                if (initialCases.length === 0) initialCases = [{ id: 'default-case', name: '預設訓練計畫', exercises: DEFAULT_EXERCISES_TEMPLATE }];
+                
+                if (savedCases) { 
+                    try { initialCases = JSON.parse(savedCases); } catch (e) { console.error(e); } 
+                }
+                
+                if (initialCases.length === 0) {
+                    initialCases = [{ id: 'default-case', name: '預設訓練計畫', exercises: DEFAULT_EXERCISES_TEMPLATE }];
+                }
+                
                 setCases(initialCases);
                 setCurrentCaseId(initialCases[0].id);
                 
                 if (savedLogo && savedLogo !== DEFAULT_LOGO) {
                     if (savedLogo.includes('<svg')) { setAppLogo(DEFAULT_LOGO); } else { setAppLogo(savedLogo); }
-                } else { setAppLogo(DEFAULT_LOGO); }
+                } else { 
+                    setAppLogo(DEFAULT_LOGO); 
+                }
                 setIsInitialized(true);
             }, []);
 
             useEffect(() => {
                 if (isInitialized) {
-                    try { localStorage.setItem('oral_training_cases_v43', JSON.stringify(cases)); } catch (e) { if (e.name === 'QuotaExceededError') { alert("儲存空間已滿！"); } }
+                    try { localStorage.setItem('oral_training_cases_v45', JSON.stringify(cases)); } catch (e) { if (e.name === 'QuotaExceededError') { alert("儲存空間已滿！"); } }
                 }
             }, [cases, isInitialized]);
 
-            useEffect(() => { if (isInitialized) localStorage.setItem('oral_exercises_logo_v43', appLogo); }, [appLogo, isInitialized]);
+            useEffect(() => { if (isInitialized) localStorage.setItem('oral_exercises_logo_v45', appLogo); }, [appLogo, isInitialized]);
 
             const currentCase = cases.find(c => c.id === currentCaseId) || cases[0] || { exercises: [] };
             const exercises = currentCase.exercises || [];
@@ -267,6 +377,7 @@
                 }
             };
             const handleSwitchCase = (id) => { setCurrentCaseId(id); setIsMenuOpen(false); setView('home'); };
+            
             const handleDeleteCaseRequest = (id, e) => {
                 e.stopPropagation();
                 if (cases.length <= 1) { alert("至少需要保留一個個案資料！"); return; }
@@ -280,6 +391,7 @@
                     }
                 });
             };
+            
             const handleDeleteExerciseRequest = (id) => {
                 setConfirmModal({
                     isOpen: true, title: '刪除動作', message: '確定要刪除這個訓練動作嗎？',
@@ -291,15 +403,19 @@
                     }
                 });
             };
+            
             const handleMoveUp = (index) => { if (index === 0) return; const newEx = [...exercises]; [newEx[index-1], newEx[index]] = [newEx[index], newEx[index-1]]; updateCurrentExercises(newEx); };
             const handleMoveDown = (index) => { if (index === exercises.length-1) return; const newEx = [...exercises]; [newEx[index+1], newEx[index]] = [newEx[index], newEx[index+1]]; updateCurrentExercises(newEx); };
+            
             const handleAddExercise = (newEx) => { updateCurrentExercises([...exercises, newEx]); setView('home'); };
+            
             const handleUpdateExercise = (updatedEx) => {
                 const newExercises = exercises.map(ex => ex.id === updatedEx.id ? updatedEx : ex);
                 updateCurrentExercises(newExercises);
                 setSelectedExercise(updatedEx);
                 setView('detail');
             };
+            
             const handleViewDetail = (ex) => { setSelectedExercise(ex); setView('detail'); };
             const handleEditClick = (ex) => { setSelectedExercise(ex); setView('edit'); };
             
@@ -318,9 +434,12 @@
             };
 
             const restartTraining = () => { setCurrentExerciseIndex(0); setView('home'); setTimeout(() => requestStartTraining(0), 0); };
+            
             const handleRequestPrint = () => setView('print_setup');
             const handleConfirmPrint = (notes) => { setPrintNotes(notes); setView('print_preview'); };
             const handleViewHistory = () => { setIsMenuOpen(false); setView('history'); };
+            const handleViewAbout = () => { setIsMenuOpen(false); setView('about'); };
+
             const handleLogoUpload = async (e) => {
                 const file = e.target.files[0];
                 if (file) {
@@ -331,6 +450,7 @@
                     } catch (error) { alert("圖片處理失敗：" + error); }
                 }
             };
+            
             const handleSaveLog = (rpe, pain) => {
                 const newLog = { id: Date.now(), date: new Date().toISOString(), caseId: currentCaseId, caseName: currentCase.name, exercisesCount: exercises.length, rpe: rpe, pain: pain };
                 try {
@@ -339,9 +459,10 @@
                     localStorage.setItem('oral_training_logs_v1', JSON.stringify(existingLogs));
                 } catch(e) { console.error(e); }
             };
+            
             const handleBackup = () => {
                 try {
-                    const data = { cases: JSON.parse(localStorage.getItem('oral_training_cases_v43') || '[]'), logs: JSON.parse(localStorage.getItem('oral_training_logs_v1') || '[]'), logo: localStorage.getItem('oral_exercises_logo_v43') || DEFAULT_LOGO };
+                    const data = { cases: JSON.parse(localStorage.getItem('oral_training_cases_v44') || '[]'), logs: JSON.parse(localStorage.getItem('oral_training_logs_v1') || '[]'), logo: localStorage.getItem('oral_exercises_logo_v44') || DEFAULT_LOGO };
                     const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
                     const url = URL.createObjectURL(blob);
                     const link = document.createElement('a');
@@ -350,6 +471,7 @@
                     link.click();
                 } catch (e) { alert("備份失敗：" + e.message); }
             };
+            
             const handleRestore = (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
@@ -359,9 +481,9 @@
                         const data = JSON.parse(event.target.result);
                         if (!data.cases || !Array.isArray(data.cases)) throw new Error("檔案格式錯誤");
                         if (confirm("警告：還原將覆蓋目前所有資料（個案、紀錄），確定要繼續嗎？")) {
-                            localStorage.setItem('oral_training_cases_v43', JSON.stringify(data.cases));
+                            localStorage.setItem('oral_training_cases_v44', JSON.stringify(data.cases));
                             if (data.logs) localStorage.setItem('oral_training_logs_v1', JSON.stringify(data.logs));
-                            if (data.logo) localStorage.setItem('oral_exercises_logo_v43', data.logo);
+                            if (data.logo) localStorage.setItem('oral_exercises_logo_v44', data.logo);
                             alert("還原成功！頁面將重新整理。");
                             window.location.reload();
                         }
@@ -393,7 +515,19 @@
 
                     {view !== 'print_preview' && (
                         <>
-                            <SideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} cases={cases} currentCaseId={currentCaseId} onSwitch={handleSwitchCase} onAdd={handleAddCase} onDelete={handleDeleteCaseRequest} onViewHistory={handleViewHistory} onBackup={handleBackup} onRestore={handleRestore} />
+                            <SideMenu 
+                                isOpen={isMenuOpen} 
+                                onClose={() => setIsMenuOpen(false)} 
+                                cases={cases} 
+                                currentCaseId={currentCaseId} 
+                                onSwitch={handleSwitchCase} 
+                                onAdd={handleAddCase} 
+                                onDelete={handleDeleteCaseRequest} 
+                                onViewHistory={handleViewHistory} 
+                                onViewAbout={handleViewAbout}
+                                onBackup={handleBackup} 
+                                onRestore={handleRestore} 
+                            />
                             <header className="bg-gradient-to-r from-[#C3A6CB] to-[#D68C93] text-white p-3 shadow-md sticky top-0 z-30 no-print">
                                 <div className="max-w-md mx-auto flex items-center justify-between">
                                     <div className="flex items-center gap-3">
@@ -414,6 +548,7 @@
                         {view === 'home' && <HomeView caseName={currentCase.name} exercises={exercises} onDelete={handleDeleteExerciseRequest} onMoveUp={handleMoveUp} onMoveDown={handleMoveDown} onAdd={() => setView('add')} onStart={() => requestStartTraining(0)} onViewDetail={handleViewDetail} onPrint={handleRequestPrint} />}
                         {view === 'safety_check' && <SafetyCheckView onConfirm={confirmSafetyAndStart} onCancel={() => setView('home')} />}
                         {view === 'history' && <HistoryView currentCaseId={currentCaseId} currentCaseName={currentCase.name} onBack={() => setView('home')} />}
+                        {view === 'about' && <AboutView onBack={() => setView('home')} logo={appLogo} />}
                         {view === 'print_setup' && <PrintSetupModal onConfirm={handleConfirmPrint} onCancel={() => setView('home')} />}
                         {view === 'print_preview' && <PrintPreviewView caseName={currentCase.name} exercises={exercises} notes={printNotes} logo={appLogo} onBack={() => setView('home')} />}
                         {view === 'detail' && selectedExercise && <DetailView exercise={selectedExercise} onBack={() => setView('home')} onEdit={() => handleEditClick(selectedExercise)} onDelete={handleDeleteExerciseRequest} onStart={() => requestStartTraining(exercises.findIndex(e => e.id === selectedExercise.id))} />}
@@ -449,7 +584,7 @@
         }
 
         // --- Side Menu ---
-        function SideMenu({ isOpen, onClose, cases, currentCaseId, onSwitch, onAdd, onDelete, onViewHistory, onBackup, onRestore }) {
+        function SideMenu({ isOpen, onClose, cases, currentCaseId, onSwitch, onAdd, onDelete, onViewHistory, onViewAbout, onBackup, onRestore }) {
             const [isAdding, setIsAdding] = useState(false);
             const [newCaseName, setNewCaseName] = useState("");
             const fileInputRef = useRef(null);
@@ -460,12 +595,17 @@
                     <div className={`fixed top-0 left-0 h-full w-72 bg-[#F9F7F5] z-50 shadow-2xl transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'} flex flex-col`}>
                         <div className="p-4 bg-[#C3A6CB] text-white flex justify-between items-center flex-shrink-0"><h2 className="text-xl font-bold flex items-center gap-2"><Users size={24} /> 個案管理</h2><button onClick={onClose} className="p-1 hover:bg-white/20 rounded-full"><X size={24} /></button></div>
                         <div className="p-4 overflow-y-auto flex-1">
-                            <div className="mb-6"><div className="text-xs font-bold text-[#8F8385] uppercase mb-2 tracking-wider">功能選單</div><button onClick={onViewHistory} className="w-full p-3 bg-white border border-gray-100 rounded-xl flex items-center gap-3 text-[#5E5052] font-bold hover:bg-gray-50 hover:text-[#D68C93] transition shadow-sm mb-3"><Activity size={20} className="text-[#D68C93]" /> 📊 查看訓練紀錄</button></div>
+                            <div className="mb-6">
+                                <div className="text-xs font-bold text-[#8F8385] uppercase mb-2 tracking-wider">功能選單</div>
+                                <button onClick={onViewHistory} className="w-full p-3 bg-white border border-gray-100 rounded-xl flex items-center gap-3 text-[#5E5052] font-bold hover:bg-gray-50 hover:text-[#D68C93] transition shadow-sm mb-3"><Activity size={20} className="text-[#D68C93]" /> 📊 查看訓練紀錄</button>
+                            </div>
                             <div className="text-xs font-bold text-[#8F8385] uppercase mb-3 tracking-wider">切換訓練計畫</div>
                             <div className="space-y-2 mb-6">{cases.map((c) => (<div key={c.id} onClick={() => onSwitch(c.id)} className={`p-3 rounded-xl flex items-center justify-between group cursor-pointer border transition ${c.id === currentCaseId ? 'bg-[#FFF0F3] border-[#D68C93] text-[#D68C93]' : 'bg-white border-gray-100 text-[#5E5052] hover:bg-gray-50'}`}><div className="flex items-center gap-3"><div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold ${c.id === currentCaseId ? 'bg-[#D68C93] text-white' : 'bg-[#F1E8B8] text-[#9C8742]'}`}>{c.name.charAt(0)}</div><div><div className="font-bold">{c.name}</div><div className="text-xs opacity-70">{c.exercises.length} 個動作</div></div></div>{cases.length > 1 && ( <button onClick={(e) => onDelete(c.id, e)} className="p-2 text-gray-300 hover:text-[#D68C93] hover:bg-[#FFF0F3] rounded-lg transition opacity-0 group-hover:opacity-100" title="刪除個案"><Trash2 size={16} /></button> )}{c.id === currentCaseId && <CheckCircle size={18} className="text-[#D68C93]" />}</div>))}</div>
                             <div className="border-t border-gray-200 pt-4"><div className="text-xs font-bold text-[#8F8385] uppercase mb-2 tracking-wider">資料管理</div><div className="grid grid-cols-2 gap-2"><button onClick={onBackup} className="p-2 bg-white border border-gray-200 rounded-lg flex flex-col items-center justify-center gap-1 text-xs font-bold text-[#5E5052] hover:bg-[#F9F7F5] transition"><DownloadCloud size={18} className="text-[#9C8742]" /> 備份資料</button><button onClick={() => fileInputRef.current.click()} className="p-2 bg-white border border-gray-200 rounded-lg flex flex-col items-center justify-center gap-1 text-xs font-bold text-[#5E5052] hover:bg-[#F9F7F5] transition"><UploadCloud size={18} className="text-[#D68C93]" /> 還原資料</button><input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={onRestore} /></div></div>
                         </div>
-                        <div className="p-4 bg-white border-t border-[#C3A6CB]/20 flex-shrink-0">{!isAdding ? ( <button onClick={() => setIsAdding(true)} className="w-full py-3 bg-[#5E5052] text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#4A3E40] active:scale-95 transition mb-4"><Plus size={20} /> 新增個案</button> ) : ( <form onSubmit={handleSubmit} className="flex flex-col gap-2 mb-4"><input autoFocus type="text" placeholder="輸入姓名 (例如: 陳爺爺)" className="w-full p-3 border border-[#C3A6CB] rounded-xl outline-none focus:ring-2 focus:ring-[#C3A6CB]" value={newCaseName} onChange={(e) => setNewCaseName(e.target.value)} /><div className="flex gap-2"><button type="button" onClick={() => setIsAdding(false)} className="flex-1 py-2 bg-gray-100 text-gray-500 rounded-lg font-bold">取消</button><button type="submit" className="flex-1 py-2 bg-[#C3A6CB] text-white rounded-lg font-bold">確認</button></div></form> )}<CopyrightFooter /></div>
+                        <div className="p-4 bg-white border-t border-[#C3A6CB]/20 flex-shrink-0">{!isAdding ? ( <button onClick={() => setIsAdding(true)} className="w-full py-3 bg-[#5E5052] text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#4A3E40] active:scale-95 transition mb-4"><Plus size={20} /> 新增個案</button> ) : ( <form onSubmit={handleSubmit} className="flex flex-col gap-2 mb-4"><input autoFocus type="text" placeholder="輸入姓名 (例如: 陳爺爺)" className="w-full p-3 border border-[#C3A6CB] rounded-xl outline-none focus:ring-2 focus:ring-[#C3A6CB]" value={newCaseName} onChange={(e) => setNewCaseName(e.target.value)} /><div className="flex gap-2"><button type="button" onClick={() => setIsAdding(false)} className="flex-1 py-2 bg-gray-100 text-gray-500 rounded-lg font-bold">取消</button><button type="submit" className="flex-1 py-2 bg-[#C3A6CB] text-white rounded-lg font-bold">確認</button></div></form> )}
+                            <CopyrightFooter onAboutClick={onViewAbout} />
+                        </div>
                     </div>
                 </>
             );
@@ -476,7 +616,7 @@
             return (
                 <div className="space-y-6 animate-fade-in">
                     <div className="bg-white p-5 rounded-2xl shadow-sm border border-[#EAD2D8] flex justify-between items-center relative overflow-hidden"><div className="absolute -right-6 -top-6 w-24 h-24 bg-[#FFF0F3] rounded-full z-0"></div><div className="relative z-10"><h2 className="text-lg font-bold text-[#5E5052] mb-1 flex items-center gap-2"><User size={18} className="text-[#D68C93]"/> {caseName}</h2><div className="flex gap-2 text-sm text-[#8F8385]"><span>今日訓練計畫</span>{exercises.length > 0 && ( <button onClick={onPrint} className="flex items-center gap-1 text-[#D68C93] underline hover:text-[#C0707D] text-xs ml-2 font-bold"><Printer size={12}/> 輸出 PDF / 列印</button> )}</div></div><div className="text-right relative z-10 flex gap-4"><div className="text-right"><div className="text-2xl font-black text-[#D68C93]">{exercises.length}</div><div className="text-xs text-[#8F8385]">個動作</div></div><div className="w-px h-10 bg-gray-100"></div><div className="text-right"><div className="text-2xl font-black text-[#D68C93]">{Math.ceil(totalDuration / 60)}</div><div className="text-xs text-[#8F8385]">分鐘</div></div></div></div>
-                    <div className="space-y-4">{exercises.map((ex, idx) => (<div key={ex.id} onClick={() => onViewDetail(ex)} className="bg-white p-3 pr-2 rounded-2xl shadow-sm border border-gray-100 flex gap-3 items-center relative overflow-hidden group hover:border-[#F1E8B8] transition cursor-pointer active:scale-[0.99]"><div className="w-20 h-20 bg-[#F9F7F5] rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden border border-[#E6E0DD] relative"><ExerciseMedia source={ex.imagePreview} alt={ex.name} className="w-full h-full object-contain" emojiSize="text-4xl" /></div><div className="flex-1 min-w-0"><h3 className="font-bold text-lg text-[#5E5052] leading-tight mb-1 truncate">{ex.name}</h3><p className="text-sm text-[#8F8385] line-clamp-1 mb-2">{ex.description}</p><div className="flex flex-wrap gap-1.5 text-xs font-medium text-[#5E5052]"><span className="bg-[#FFF0F3] px-1.5 py-0.5 rounded-md flex items-center gap-1 text-[#D68C93] border border-[#D68C93]/20"><Clock size={10}/> {ex.duration}s</span><span className="bg-[#FFFCE6] px-1.5 py-0.5 rounded-md flex items-center gap-1 text-[#9C8742] border border-[#F1E8B8]"><Coffee size={10}/> {ex.rest || 5}s</span><span className="bg-[#F2F2F2] px-1.5 py-0.5 rounded-md flex items-center gap-1 text-[#5E5052]"><Repeat size={10}/> {ex.sets}</span></div></div><div className="flex flex-col gap-1 items-center justify-center pl-2 border-l border-gray-100 relative z-20" onClick={(e) => { e.stopPropagation(); }}><button type="button" onClick={(e) => { e.stopPropagation(); onMoveUp(idx); }} disabled={idx === 0} className={`p-1.5 rounded-lg transition ${idx === 0 ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:bg-[#F9F7F5] hover:text-[#C3A6CB]'}`}><ArrowUp size={18} className="pointer-events-none" /></button><button type="button" onClick={(e) => { e.stopPropagation(); onDelete(ex.id); }} className="p-1.5 rounded-lg text-[#D68C93] hover:text-red-600 hover:bg-[#FFF0F3] transition relative z-30" title="刪除"><Trash2 size={18} className="pointer-events-none" /></button><button type="button" onClick={(e) => { e.stopPropagation(); onMoveDown(idx); }} disabled={idx === exercises.length - 1} className={`p-1.5 rounded-lg transition ${idx === exercises.length - 1 ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:bg-[#F9F7F5] hover:text-[#C3A6CB]'}`}><ArrowDown size={18} className="pointer-events-none" /></button></div></div>))}{exercises.length === 0 && ( <div className="flex flex-col items-center justify-center py-12 text-[#8F8385] bg-white rounded-2xl border-2 border-dashed border-gray-200"><Info size={48} className="mb-4 opacity-50" /><p>目前沒有訓練動作</p><p className="text-sm">請點擊下方按鈕新增</p></div> )}</div>
+                    <div className="space-y-4">{exercises.map((ex, idx) => (<div key={ex.id} onClick={() => onViewDetail(ex)} className="bg-white p-3 pr-2 rounded-2xl shadow-sm border border-gray-100 flex gap-3 items-center relative overflow-hidden group hover:border-[#F1E8B8] transition cursor-pointer active:scale-[0.99]"><div className="w-20 h-20 bg-[#F9F7F5] rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden border border-[#E6E0DD] relative"><ExerciseMedia source={ex.imagePreview} alt={ex.name} className="w-full h-full object-contain" emojiSize="text-4xl" /></div><div className="flex-1 min-w-0"><h3 className="font-bold text-lg text-[#5E5052] leading-tight mb-1 truncate">{ex.name}</h3><p className="text-sm text-[#5E5052] line-clamp-1 mb-2">{ex.description}</p><div className="flex flex-wrap gap-1.5 text-xs font-medium text-[#5E5052]"><span className="bg-[#FFF0F3] px-1.5 py-0.5 rounded-md flex items-center gap-1 text-[#D68C93] border border-[#D68C93]/20"><Clock size={10}/> {ex.duration}s</span><span className="bg-[#FFFCE6] px-1.5 py-0.5 rounded-md flex items-center gap-1 text-[#9C8742] border border-[#F1E8B8]"><Coffee size={10}/> {ex.rest || 5}s</span><span className="bg-[#F2F2F2] px-1.5 py-0.5 rounded-md flex items-center gap-1 text-[#5E5052]"><Repeat size={10}/> {ex.sets}</span></div></div><div className="flex flex-col gap-1 items-center justify-center pl-2 border-l border-gray-100 relative z-20" onClick={(e) => { e.stopPropagation(); }}><button type="button" onClick={(e) => { e.stopPropagation(); onMoveUp(idx); }} disabled={idx === 0} className={`p-1.5 rounded-lg transition ${idx === 0 ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:bg-[#F9F7F5] hover:text-[#C3A6CB]'}`}><ArrowUp size={18} className="pointer-events-none" /></button><button type="button" onClick={(e) => { e.stopPropagation(); onDelete(ex.id); }} className="p-1.5 rounded-lg text-[#D68C93] hover:text-red-600 hover:bg-[#FFF0F3] transition relative z-30" title="刪除"><Trash2 size={18} className="pointer-events-none" /></button><button type="button" onClick={(e) => { e.stopPropagation(); onMoveDown(idx); }} disabled={idx === exercises.length - 1} className={`p-1.5 rounded-lg transition ${idx === exercises.length - 1 ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:bg-[#F9F7F5] hover:text-[#C3A6CB]'}`}><ArrowDown size={18} className="pointer-events-none" /></button></div></div>))}{exercises.length === 0 && ( <div className="flex flex-col items-center justify-center py-12 text-[#8F8385] bg-white rounded-2xl border-2 border-dashed border-gray-200"><Info size={48} className="mb-4 opacity-50" /><p>目前沒有訓練動作</p><p className="text-sm">請點擊下方按鈕新增</p></div> )}</div>
                     <div className="h-24"></div>
                     <div className="fixed bottom-6 left-0 right-0 px-4 max-w-md mx-auto flex gap-3 z-30">
                         <button onClick={onAdd} className="flex-1 bg-white border border-[#F1E8B8] text-[#C4A455] py-3.5 rounded-full font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition hover:bg-[#FFFDF5]"><Plus size={20} /> 新增動作</button>
@@ -581,7 +721,7 @@
                                 exercises.map((ex, idx) => (
                                     <div key={ex.id} className="flex gap-6 border-b border-gray-200 pb-6 break-inside-avoid page-break-inside-avoid">
                                         <div className="w-32 h-32 flex-shrink-0 border border-gray-200 rounded-xl flex items-center justify-center bg-[#F9F7F5] overflow-hidden"><ExerciseMedia source={ex.imagePreview} alt={ex.name} className="w-full h-full object-contain" emojiSize="text-5xl"/></div>
-                                        <div className="flex-1"><div className="flex justify-between items-start mb-2"><h3 className="text-xl font-bold text-[#D68C93]"><span className="text-sm text-[#8F8385] mr-2">#{idx + 1}</span>{ex.name}</h3></div><p className="text-gray-700 mb-4 leading-relaxed">{ex.description || "無動作說明"}</p><div className="flex gap-4 text-sm"><div className="bg-[#FDF2F4] px-3 py-1 rounded border border-[#EAD2D8] text-[#D68C93] font-bold">持續：{ex.duration} 秒</div><div className="bg-[#FFFCE6] px-3 py-1 rounded border border-[#F1E8B8] text-[#9C8742] font-bold">休息：{ex.rest || 5} 秒</div><div className="bg-[#F2F2F2] px-3 py-1 rounded border border-gray-200 text-[#5E5052] font-bold">重複：{ex.sets} 組</div></div></div>
+                                        <div className="flex-1"><div className="flex justify-between items-start mb-2"><h3 className="text-xl font-bold text-[#D68C93]"><span className="text-sm text-[#8F8385] mr-2">#{idx + 1}</span>{ex.name}</h3></div><p className="text-gray-900 mb-4 leading-relaxed">{ex.description || "無動作說明"}</p><div className="flex gap-4 text-sm"><div className="bg-[#FDF2F4] px-3 py-1 rounded border border-[#EAD2D8] text-[#D68C93] font-bold">持續：{ex.duration} 秒</div><div className="bg-[#FFFCE6] px-3 py-1 rounded border border-[#F1E8B8] text-[#9C8742] font-bold">休息：{ex.rest || 5} 秒</div><div className="bg-[#F2F2F2] px-3 py-1 rounded border border-gray-200 text-[#5E5052] font-bold">重複：{ex.sets} 組</div></div></div>
                                     </div>
                                 ))
                             )}
@@ -635,7 +775,7 @@
                     )}
 
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
-                        <div><h3 className="text-sm font-bold text-[#8F8385] mb-2 uppercase tracking-wide">動作說明</h3><p className="text-[#5E5052] text-lg leading-relaxed bg-[#FFF0F3] p-4 rounded-xl border border-[#EAD2D8]">{exercise.description || "無說明"}</p></div>
+                        <div><h3 className="text-sm font-bold text-[#8F8385] mb-2 uppercase tracking-wide">動作說明</h3><p className="text-gray-800 text-lg leading-relaxed bg-[#FFF0F3] p-4 rounded-xl border border-[#EAD2D8]">{exercise.description || "無說明"}</p></div>
                         <div><h3 className="text-sm font-bold text-[#8F8385] mb-3 uppercase tracking-wide">訓練設定</h3><div className="grid grid-cols-3 gap-3"><div className="bg-[#F9F9F9] p-3 rounded-xl text-center border border-gray-100"><Clock className="w-6 h-6 mx-auto mb-1 text-[#D68C93]" /><div className="text-xs text-[#8F8385]">持續</div><div className="font-bold text-lg text-[#5E5052]">{exercise.duration} <span className="text-xs">秒</span></div></div><div className="bg-[#F9F9F9] p-3 rounded-xl text-center border border-gray-100"><Coffee className="w-6 h-6 mx-auto mb-1 text-[#E6C67E]" /><div className="text-xs text-[#8F8385]">休息</div><div className="font-bold text-lg text-[#5E5052]">{exercise.rest || 5} <span className="text-xs">秒</span></div></div><div className="bg-[#F9F9F9] p-3 rounded-xl text-center border border-gray-100"><Repeat className="w-6 h-6 mx-auto mb-1 text-[#8F8385]" /><div className="text-xs text-[#8F8385]">組數</div><div className="font-bold text-lg text-[#5E5052]">{exercise.sets} <span className="text-xs">次</span></div></div></div></div>
                     </div>
                     <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur border-t border-gray-100 max-w-md mx-auto flex gap-4 z-20">
@@ -840,9 +980,9 @@
                     <div key={`${currentIndex}-${phase}`} className={`flex-1 flex flex-col items-center justify-center p-6 rounded-3xl border-4 shadow-xl transition-all duration-500 relative overflow-hidden ${info.bg} ${info.text} ${info.border}`}>
                         <div className="absolute top-0 left-0 w-32 h-32 bg-current opacity-5 rounded-full -translate-x-1/2 -translate-y-1/2 blur-2xl pointer-events-none"></div>
                         <div className="absolute bottom-0 right-0 w-40 h-40 bg-current opacity-5 rounded-full translate-x-1/2 translate-y-1/2 blur-2xl pointer-events-none"></div>
-                        <div className="mb-4 text-2xl font-black opacity-90 flex items-center gap-2 uppercase tracking-widest relative z-10"><span className="text-3xl animate-bounce">{info.icon}</span> {info.title}</div>
+                        <div className="mb-4 text-2xl font-black opacity-100 flex items-center gap-2 uppercase tracking-widest relative z-10"><span className="text-3xl animate-bounce">{info.icon}</span> {info.title}</div>
                         <div className="w-full max-w-xs aspect-square mb-6 bg-white rounded-2xl flex items-center justify-center overflow-hidden border-4 border-white/50 shadow-sm relative z-10">{phase === 'rest' ? (<div className="animate-pulse flex flex-col items-center justify-center text-[#E6C67E]"><Coffee size={80} className="opacity-60 mb-2 text-[#C4A455]" /><span className="font-bold text-lg text-[#9C8742]">休息中</span></div>) : (<ExerciseMedia source={currentExercise.imagePreview} alt="exercise" className="w-full h-full object-contain" emojiSize="text-9xl" />)}</div>
-                        <p className="text-center font-medium opacity-80 mb-4 max-w-xs text-lg px-4 py-1 rounded-lg bg-white/30 backdrop-blur-sm relative z-10">{phase === 'exercise' ? currentExercise.description : info.sub}</p>
+                        <p className="text-center font-medium opacity-100 font-bold mb-4 max-w-xs text-lg px-4 py-1 rounded-lg bg-white/30 backdrop-blur-sm relative z-10">{phase === 'exercise' ? currentExercise.description : info.sub}</p>
                         <div className="text-8xl font-black tabular-nums tracking-tighter mb-4 scale-110 drop-shadow-sm font-mono relative z-10">{timeLeft}<span className="text-2xl font-bold ml-2 opacity-50 absolute bottom-4">秒</span></div>
                         <div className="text-base font-bold px-5 py-2.5 bg-white/50 backdrop-blur rounded-full shadow-sm flex items-center gap-2 relative z-10"><Repeat size={16} />第 <span className="text-xl text-current">{currentSet}</span> 組 / 共 {currentExercise.sets} 組</div>
                     </div>
