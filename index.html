@@ -63,7 +63,7 @@
 
     <!-- React Application Script -->
     <script type="text/babel" data-type="module">
-        import React, { useState, useEffect, useRef, useCallback } from 'https://esm.sh/react@18.2.0';
+        import React, { useState, useEffect, useRef } from 'https://esm.sh/react@18.2.0';
         import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client';
         import { 
             Plus, Trash2, Play, Pause, Clock, Repeat, Image as ImageIcon, 
@@ -71,7 +71,8 @@
             SkipForward, ArrowLeft, ArrowUp, ArrowDown, Menu, User, X, 
             ChevronRight, ChevronLeft, Users, Printer, FileText, AlertTriangle, Edit3, 
             Copyright, Mail, Volume2, VolumeX, Minus, Settings2, Loader2, Smile, Meh, Frown, PenTool,
-            Calendar as CalendarIcon, Download, Activity, TrendingUp, UploadCloud, DownloadCloud, ShieldCheck
+            Calendar as CalendarIcon, Download, Activity, TrendingUp, UploadCloud, DownloadCloud, ShieldCheck,
+            Youtube
         } from 'https://esm.sh/lucide-react@0.294.0';
 
         // --- 自定義節拍器 SVG 圖示 ---
@@ -112,7 +113,17 @@
             });
         };
 
-        // --- 2. 預設動作資料 ---
+        // --- 2. YouTube ID 提取工具 (增強相容性版) ---
+        const getYouTubeID = (url) => {
+            if (!url || typeof url !== 'string') return null;
+            const cleanUrl = url.trim();
+            // 支援 m.youtube, www.youtube, youtu.be, shorts, embed 等各種格式
+            const regExp = /^(?:https?:\/\/)?(?:www\.|m\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})(?:[\?&].*)?$/;
+            const match = cleanUrl.match(regExp);
+            return match ? match[1] : null;
+        };
+
+        // --- 3. 預設動作資料 ---
         const DEFAULT_EXERCISES_TEMPLATE = [
             { id: 'ex-1', name: '舌頭前後運動', description: '舌頭向前伸（越長越好），再快速收回。', duration: 15, sets: 5, rest: 5, imagePreview: '😛' },
             { id: 'ex-2', name: '舌頭左右運動', description: '舌頭伸出往左右嘴角移動。', duration: 20, sets: 5, rest: 5, imagePreview: '⬅️➡️' },
@@ -126,11 +137,7 @@
         ];
 
         const SUCCESS_SOUND_URL = "https://assets.mixkit.co/sfx/preview/mixkit-video-game-win-2016.mp3";
-        
-        // --- 回復到最一開始的 PNG 圖示連結 ---
         const DEFAULT_LOGO = "https://cdn-icons-png.flaticon.com/512/2995/2995525.png";
-
-        // --- 定義將藍色轉為乾燥玫瑰粉的 CSS 濾鏡 ---
         const PINK_FILTER = "invert(65%) sepia(30%) saturate(876%) hue-rotate(307deg) brightness(87%) contrast(89%)";
 
         const isImageFile = (source) => source && (source.startsWith('data:image') || source.startsWith('http') || source.startsWith('blob:'));
@@ -225,6 +232,7 @@
                 if (initialCases.length === 0) initialCases = [{ id: 'default-case', name: '預設訓練計畫', exercises: DEFAULT_EXERCISES_TEMPLATE }];
                 setCases(initialCases);
                 setCurrentCaseId(initialCases[0].id);
+                
                 if (savedLogo && savedLogo !== DEFAULT_LOGO) {
                     if (savedLogo.includes('<svg')) { setAppLogo(DEFAULT_LOGO); } else { setAppLogo(savedLogo); }
                 } else { setAppLogo(DEFAULT_LOGO); }
@@ -295,7 +303,6 @@
             const handleViewDetail = (ex) => { setSelectedExercise(ex); setView('detail'); };
             const handleEditClick = (ex) => { setSelectedExercise(ex); setView('edit'); };
             
-            // --- 觸發訓練邏輯 (安全檢核) ---
             const requestStartTraining = (startIndex = 0) => {
                 if (exercises.length === 0) return;
                 setPendingTrainingOptions({ startIndex });
@@ -419,6 +426,7 @@
             );
         }
 
+        // --- SafetyCheckView ---
         function SafetyCheckView({ onConfirm, onCancel }) {
             const [checks, setChecks] = useState({ posture: false, clean: false, mental: false });
             const allChecked = checks.posture && checks.clean && checks.mental;
@@ -440,6 +448,7 @@
             );
         }
 
+        // --- Side Menu ---
         function SideMenu({ isOpen, onClose, cases, currentCaseId, onSwitch, onAdd, onDelete, onViewHistory, onBackup, onRestore }) {
             const [isAdding, setIsAdding] = useState(false);
             const [newCaseName, setNewCaseName] = useState("");
@@ -542,6 +551,7 @@
             );
         }
 
+        // --- 列印預覽 ---
         function PrintPreviewView({ caseName, exercises, notes, logo, onBack }) {
             const date = new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' });
             const handlePrint = () => window.print();
@@ -555,7 +565,15 @@
                     </div>
                     <div className="max-w-[210mm] mx-auto bg-white min-h-[297mm] p-[15mm] shadow-xl print:shadow-none print:p-0 print:max-w-full my-8 print:my-0 text-[#5E5052] flex flex-col print-container">
                         <div className="flex items-center justify-between border-b-2 border-[#D68C93] pb-4 mb-6">
-                            <div className="flex items-center gap-4"><img src={logo} alt="Logo" className="w-16 h-16 object-contain" style={logo.includes('flaticon') ? { filter: PINK_FILTER } : {}}/><div><h1 className="text-2xl font-black text-[#D68C93]">赫賀豚吞嚥訓練管家</h1><p className="text-sm text-[#8F8385]">口腔機能自主訓練單</p></div></div>
+                            <div className="flex items-center gap-4">
+                                <img 
+                                    src={logo} 
+                                    alt="Logo" 
+                                    className="w-16 h-16 object-contain" 
+                                    style={logo.includes('flaticon') ? { filter: PINK_FILTER } : {}}
+                                />
+                                <div><h1 className="text-2xl font-black text-[#D68C93]">赫賀豚吞嚥訓練管家</h1><p className="text-sm text-[#8F8385]">口腔機能自主訓練單</p></div>
+                            </div>
                             <div className="text-right"><div className="text-xl font-bold">{caseName}</div><div className="text-sm text-[#8F8385]">{date}</div></div>
                         </div>
                         <div className="space-y-6 flex-1">
@@ -579,7 +597,9 @@
             );
         }
 
+        // --- DetailView ---
         function DetailView({ exercise, onBack, onDelete, onEdit, onStart }) {
+            const youtubeId = getYouTubeID(exercise.videoUrl);
             useEffect(() => { window.scrollTo(0, 0); }, []);
             return (
                 <div className="space-y-6 animate-fade-in pb-20">
@@ -587,10 +607,33 @@
                         <div className="flex items-center gap-2"><button onClick={onBack} className="p-2 hover:bg-white rounded-full transition text-[#5E5052]"><ArrowLeft size={24} /></button><h2 className="text-xl font-bold text-[#5E5052]">動作詳情</h2></div>
                         <button onClick={onEdit} className="p-2 text-[#D68C93] hover:bg-white rounded-full transition" title="編輯動作"><Edit3 size={24} /></button>
                     </div>
-                    <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden relative">
-                        <div className="aspect-square w-full bg-[#F9F7F5] flex items-center justify-center"><ExerciseMedia source={exercise.imagePreview} alt={exercise.name} className="w-full h-full object-contain" emojiSize="text-9xl" /></div>
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#5E5052]/80 to-transparent p-6 pt-12 text-white"><h1 className="text-3xl font-bold mb-1">{exercise.name}</h1></div>
+                    
+                    {/* 修正：根據是否有影片調整寬高比，並使用 youtube-nocookie.com */}
+                    <div className={`bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden relative ${youtubeId ? 'aspect-video' : 'aspect-square'}`}>
+                        {youtubeId ? (
+                            <iframe 
+                                src={`https://www.youtube-nocookie.com/embed/${youtubeId}?rel=0`}
+                                className="w-full h-full" 
+                                title="YouTube video player" 
+                                frameBorder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                                allowFullScreen
+                            ></iframe>
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-[#F9F7F5]">
+                                <ExerciseMedia source={exercise.imagePreview} alt={exercise.name} className="w-full h-full object-contain" emojiSize="text-9xl" />
+                            </div>
+                        )}
+                        {!youtubeId && <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#5E5052]/80 to-transparent p-6 pt-12 text-white"><h1 className="text-3xl font-bold mb-1">{exercise.name}</h1></div>}
                     </div>
+                    
+                    {exercise.videoUrl && !youtubeId && (
+                        <div className="bg-red-50 text-red-500 text-sm p-3 rounded-xl border border-red-100 flex items-center gap-2">
+                            <AlertCircle size={16} />
+                            <span>無效的影片連結，請檢查網址</span>
+                        </div>
+                    )}
+
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
                         <div><h3 className="text-sm font-bold text-[#8F8385] mb-2 uppercase tracking-wide">動作說明</h3><p className="text-[#5E5052] text-lg leading-relaxed bg-[#FFF0F3] p-4 rounded-xl border border-[#EAD2D8]">{exercise.description || "無說明"}</p></div>
                         <div><h3 className="text-sm font-bold text-[#8F8385] mb-3 uppercase tracking-wide">訓練設定</h3><div className="grid grid-cols-3 gap-3"><div className="bg-[#F9F9F9] p-3 rounded-xl text-center border border-gray-100"><Clock className="w-6 h-6 mx-auto mb-1 text-[#D68C93]" /><div className="text-xs text-[#8F8385]">持續</div><div className="font-bold text-lg text-[#5E5052]">{exercise.duration} <span className="text-xs">秒</span></div></div><div className="bg-[#F9F9F9] p-3 rounded-xl text-center border border-gray-100"><Coffee className="w-6 h-6 mx-auto mb-1 text-[#E6C67E]" /><div className="text-xs text-[#8F8385]">休息</div><div className="font-bold text-lg text-[#5E5052]">{exercise.rest || 5} <span className="text-xs">秒</span></div></div><div className="bg-[#F9F9F9] p-3 rounded-xl text-center border border-gray-100"><Repeat className="w-6 h-6 mx-auto mb-1 text-[#8F8385]" /><div className="text-xs text-[#8F8385]">組數</div><div className="font-bold text-lg text-[#5E5052]">{exercise.sets} <span className="text-xs">次</span></div></div></div></div>
@@ -603,6 +646,7 @@
             );
         }
 
+        // --- AddExerciseView ---
         function AddExerciseView({ onSave, onCancel, initialData }) {
             const [name, setName] = useState(initialData ? initialData.name : '');
             const [desc, setDesc] = useState(initialData ? initialData.description : '');
@@ -610,6 +654,8 @@
             const [rest, setRest] = useState(initialData ? initialData.rest : 5);
             const [sets, setSets] = useState(initialData ? initialData.sets : 5);
             const [imagePreview, setImagePreview] = useState(initialData ? initialData.imagePreview : null);
+            // 修正：確保 videoUrl 有初始值
+            const [videoUrl, setVideoUrl] = useState(initialData?.videoUrl || ''); 
             const [errorMsg, setErrorMsg] = useState('');
             const [isCompressing, setIsCompressing] = useState(false);
 
@@ -635,7 +681,20 @@
                 }
             };
 
-            const handleSubmit = (e) => { e.preventDefault(); if (!name.trim()) return; onSave({ id: initialData ? initialData.id : Date.now().toString(), name, description: desc, duration: Number(duration), rest: Number(rest), sets: Number(sets), imagePreview }); };
+            const handleSubmit = (e) => { 
+                e.preventDefault(); 
+                if (!name.trim()) return; 
+                onSave({ 
+                    id: initialData ? initialData.id : Date.now().toString(), 
+                    name, 
+                    description: desc, 
+                    duration: Number(duration), 
+                    rest: Number(rest), 
+                    sets: Number(sets), 
+                    imagePreview,
+                    videoUrl // 儲存 YouTube 連結
+                }); 
+            };
             
             const CounterInput = ({ label, value, setValue, icon: Icon, theme }) => {
                 const themeStyles = { orange: "border-[#EAD2D8] bg-[#FFF0F3] text-[#D68C93]", blue: "border-[#F1E8B8] bg-[#FFFCE6] text-[#9C8742]", gray: "border-gray-200 bg-[#F9F7F5] text-[#5E5052]" };
@@ -650,6 +709,7 @@
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div><label className="block text-sm font-bold text-[#5E5052] mb-2">動作名稱 <span className="text-[#D68C93]">*</span></label><input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full p-4 bg-[#F9F7F5] border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D68C93] focus:bg-white outline-none transition font-medium text-[#5E5052]" placeholder="例如：舌上抬運動" required /></div>
                         <div><label className="block text-sm font-bold text-[#5E5052] mb-2">動作說明</label><textarea value={desc} onChange={e => setDesc(e.target.value)} className="w-full p-4 bg-[#F9F7F5] border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D68C93] focus:bg-white outline-none transition text-[#5E5052]" placeholder="簡單描述如何執行..." rows="2" /></div>
+                        <div><label className="block text-sm font-bold text-[#5E5052] mb-2 flex items-center gap-2"><Youtube size={16} className="text-red-500"/> YouTube 影片連結 (選填)</label><input type="url" value={videoUrl} onChange={e => setVideoUrl(e.target.value)} className="w-full p-4 bg-[#F9F7F5] border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D68C93] focus:bg-white outline-none transition text-[#5E5052]" placeholder="https://youtu.be/..." /><p className="text-xs text-gray-400 mt-1 ml-1">若填寫此欄位，將優先顯示影片而非圖片</p></div>
                         <div className="grid grid-cols-2 gap-4"><CounterInput label="動作(秒)" value={duration} setValue={setDuration} icon={Clock} theme="orange" /><CounterInput label="休息(秒)" value={rest} setValue={setRest} icon={Coffee} theme="blue" /></div>
                         <div className="w-1/2 pr-2"><CounterInput label="組數(次)" value={sets} setValue={setSets} icon={Repeat} theme="gray" /></div>
                         <div>
@@ -675,15 +735,12 @@
             const [metronomeOn, setMetronomeOn] = useState(false);
             const [bpm, setBpm] = useState(60);
             const [showMetronomeSettings, setShowMetronomeSettings] = useState(false);
-            
-            // --- 語音導引 State ---
             const [voiceGuide, setVoiceGuide] = useState(false); 
-
             const audioCtxRef = useRef(null);
             const currentExercise = exercises[currentIndex];
             const restDuration = currentExercise.rest || 5; 
+            const timerRef = useRef(null);
 
-            // --- 語音功能 ---
             const speak = (text) => {
                 if (!voiceGuide) return;
                 if ('speechSynthesis' in window) {
@@ -695,72 +752,36 @@
                 }
             };
 
-            // 觸發語音的時機
             useEffect(() => {
-                if (phase === 'prepare') {
-                    speak(`下一動作：${currentExercise.name}。${currentExercise.description}`);
-                } else if (phase === 'exercise') {
-                    speak('開始');
-                } else if (phase === 'rest') {
-                    speak('休息');
-                }
-            }, [phase, currentIndex, currentSet, voiceGuide]); 
+                if (phase === 'prepare') { speak(`下一動作：${currentExercise.name}。${currentExercise.description}`); } 
+                else if (phase === 'exercise') { speak('開始'); } 
+                else if (phase === 'rest') { speak('休息'); }
+            }, [phase, currentIndex, currentSet, voiceGuide]);
 
-            useEffect(() => {
-                return () => {
-                    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-                };
-            }, []);
-
-            // 初始化
-            useEffect(() => { 
-                setPhase('prepare'); 
-                setTimeLeft(12); 
-                setCurrentSet(1); 
-                setIsPaused(false); 
-            }, [currentIndex]); 
+            useEffect(() => { return () => { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); }; }, []);
+            useEffect(() => { setPhase('prepare'); setTimeLeft(12); setCurrentSet(1); setIsPaused(false); }, [currentIndex]);
             
-            // 核心計時器邏輯 (修復卡頓問題)
             useEffect(() => {
                 if (isPaused) return;
-                
-                // 當時間歸零時，不要繼續執行倒數邏輯，等待下方 effect 處理狀態切換
                 if (timeLeft <= 0) return;
-
-                const timer = setInterval(() => {
-                    setTimeLeft(prev => prev - 1);
-                }, 1000);
-                return () => clearInterval(timer);
+                timerRef.current = setInterval(() => { setTimeLeft(prev => prev - 1); }, 1000);
+                return () => clearInterval(timerRef.current);
             }, [isPaused, timeLeft]);
 
-            // 狀態切換邏輯 (監聽 timeLeft 歸零)
             useEffect(() => {
                 if (timeLeft === 0) {
-                    // 根據當前狀態切換到下一個狀態
-                    if (phase === 'prepare') {
-                        setPhase('exercise');
-                        setTimeLeft(currentExercise.duration);
-                    } else if (phase === 'exercise') {
-                        if (currentSet < currentExercise.sets) {
-                            setPhase('rest');
-                            setTimeLeft(restDuration);
-                        } else {
-                            // 換下一個動作
-                            if (currentIndex < exercises.length - 1) {
-                                setCurrentIndex(prev => prev + 1);
-                            } else {
-                                onFinish();
-                            }
+                    if (phase === 'prepare') { setPhase('exercise'); setTimeLeft(currentExercise.duration); } 
+                    else if (phase === 'exercise') {
+                        if (currentSet < currentExercise.sets) { setPhase('rest'); setTimeLeft(restDuration); } 
+                        else {
+                            if (currentIndex < exercises.length - 1) { setCurrentIndex(prev => prev + 1); } else { onFinish(); }
                         }
                     } else if (phase === 'rest') {
-                        setCurrentSet(prev => prev + 1);
-                        setPhase('exercise');
-                        setTimeLeft(currentExercise.duration);
+                        setCurrentSet(prev => prev + 1); setPhase('exercise'); setTimeLeft(currentExercise.duration);
                     }
                 }
             }, [timeLeft, phase, currentExercise, currentSet, currentIndex, exercises.length, onFinish, restDuration]);
 
-            // 節拍器
             useEffect(() => {
                 if (metronomeOn && !isPaused && phase === 'exercise') {
                     const interval = (60 / bpm) * 1000;
@@ -785,11 +806,7 @@
             };
 
             const skipExercise = () => { 
-                if (currentIndex < exercises.length - 1) {
-                    setCurrentIndex(prev => prev + 1);
-                } else {
-                    onFinish();
-                }
+                if (currentIndex < exercises.length - 1) { setCurrentIndex(prev => prev + 1); } else { onFinish(); }
             };
 
             const getPhaseInfo = () => {
@@ -842,7 +859,6 @@
 
             useEffect(() => { 
                 if (audioRef.current) { audioRef.current.volume = 0.5; audioRef.current.play().catch(e => console.log("Autoplay blocked:", e)); } 
-                // 訓練完成時也語音提示
                 if ('speechSynthesis' in window) {
                     const utterance = new SpeechSynthesisUtterance("訓練完成");
                     utterance.lang = 'zh-TW';
@@ -852,64 +868,33 @@
 
             const handleFeedback = (level) => {
                 setRpe(level);
-                // 自動儲存邏輯 (Debounce 或直接存)
-                if (!hasSaved) {
-                    onSaveLog(level, pain);
-                    setHasSaved(true);
-                }
+                if (!hasSaved) { onSaveLog(level, pain); setHasSaved(true); }
             };
 
-            const togglePain = () => {
-                setPain(!pain);
-                setHasSaved(false); // 允許重新儲存
-            };
+            const togglePain = () => { setPain(!pain); setHasSaved(false); };
 
             return (
                 <div className="flex flex-col items-center justify-center py-8 animate-fade-in min-h-[85vh]">
                     <audio ref={audioRef} src={SUCCESS_SOUND_URL} preload="auto" />
-                    
                     <div className="relative mb-6">
                         <div className="absolute inset-0 bg-[#D68C93] rounded-full blur-xl opacity-20 animate-pulse"></div>
-                        <div className="w-32 h-32 bg-gradient-to-br from-[#FFF0F3] to-[#F9DCE2] rounded-full flex items-center justify-center text-[#D68C93] shadow-xl border-4 border-white relative z-10">
-                            <CheckCircle size={64} strokeWidth={2.5} />
-                        </div>
+                        <div className="w-32 h-32 bg-gradient-to-br from-[#FFF0F3] to-[#F9DCE2] rounded-full flex items-center justify-center text-[#D68C93] shadow-xl border-4 border-white relative z-10"><CheckCircle size={64} strokeWidth={2.5} /></div>
                     </div>
-                    
                     <h2 className="text-3xl font-black text-[#5E5052] mb-2 tracking-tight">訓練完成！</h2>
                     <p className="text-[#8F8385] mb-6 text-center text-sm">持之以恆，健康加分。</p>
-
-                    {/* 問卷區塊 */}
                     <div className="w-full bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-6">
-                        <h3 className="font-bold text-[#5E5052] mb-4 flex items-center gap-2 text-sm">
-                            <FileText size={16} className="text-[#D68C93]"/> 今日訓練感受
-                        </h3>
-                        
+                        <h3 className="font-bold text-[#5E5052] mb-4 flex items-center gap-2 text-sm"><FileText size={16} className="text-[#D68C93]"/> 今日訓練感受</h3>
                         <div className="grid grid-cols-3 gap-3 mb-4">
-                            <button onClick={() => handleFeedback('easy')} className={`p-3 rounded-xl border flex flex-col items-center gap-2 transition ${rpe === 'easy' ? 'bg-[#E7F6E7] border-[#95D595] text-[#2E7D32]' : 'bg-gray-50 border-gray-100 text-gray-400 hover:bg-gray-100'}`}>
-                                <Smile size={32} strokeWidth={1.5} />
-                                <span className="text-xs font-bold">輕鬆</span>
-                            </button>
-                            <button onClick={() => handleFeedback('moderate')} className={`p-3 rounded-xl border flex flex-col items-center gap-2 transition ${rpe === 'moderate' ? 'bg-[#FFF9E6] border-[#F1E8B8] text-[#9C8742]' : 'bg-gray-50 border-gray-100 text-gray-400 hover:bg-gray-100'}`}>
-                                <Meh size={32} strokeWidth={1.5} />
-                                <span className="text-xs font-bold">剛好</span>
-                            </button>
-                            <button onClick={() => handleFeedback('hard')} className={`p-3 rounded-xl border flex flex-col items-center gap-2 transition ${rpe === 'hard' ? 'bg-[#FFF0F0] border-[#FFCDD2] text-[#C62828]' : 'bg-gray-50 border-gray-100 text-gray-400 hover:bg-gray-100'}`}>
-                                <Frown size={32} strokeWidth={1.5} />
-                                <span className="text-xs font-bold">吃力</span>
-                            </button>
+                            <button onClick={() => handleFeedback('easy')} className={`p-3 rounded-xl border flex flex-col items-center gap-2 transition ${rpe === 'easy' ? 'bg-[#E7F6E7] border-[#95D595] text-[#2E7D32]' : 'bg-gray-50 border-gray-100 text-gray-400 hover:bg-gray-100'}`}><Smile size={32} strokeWidth={1.5} /><span className="text-xs font-bold">輕鬆</span></button>
+                            <button onClick={() => handleFeedback('moderate')} className={`p-3 rounded-xl border flex flex-col items-center gap-2 transition ${rpe === 'moderate' ? 'bg-[#FFF9E6] border-[#F1E8B8] text-[#9C8742]' : 'bg-gray-50 border-gray-100 text-gray-400 hover:bg-gray-100'}`}><Meh size={32} strokeWidth={1.5} /><span className="text-xs font-bold">剛好</span></button>
+                            <button onClick={() => handleFeedback('hard')} className={`p-3 rounded-xl border flex flex-col items-center gap-2 transition ${rpe === 'hard' ? 'bg-[#FFF0F0] border-[#FFCDD2] text-[#C62828]' : 'bg-gray-50 border-gray-100 text-gray-400 hover:bg-gray-100'}`}><Frown size={32} strokeWidth={1.5} /><span className="text-xs font-bold">吃力</span></button>
                         </div>
-
                         <div className="flex items-center justify-between bg-[#F9F7F5] p-3 rounded-xl cursor-pointer" onClick={togglePain}>
-                            <div className="flex items-center gap-2 text-sm font-bold text-[#5E5052]">
-                                <AlertCircle size={18} className={pain ? "text-red-500" : "text-gray-400"} /> 是否有疼痛感？
-                            </div>
-                            <div className={`w-12 h-6 rounded-full relative transition ${pain ? 'bg-red-400' : 'bg-gray-300'}`}>
-                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${pain ? 'left-7' : 'left-1'}`} />
-                            </div>
+                            <div className="flex items-center gap-2 text-sm font-bold text-[#5E5052]"><AlertCircle size={18} className={pain ? "text-red-500" : "text-gray-400"} /> 是否有疼痛感？</div>
+                            <div className={`w-12 h-6 rounded-full relative transition ${pain ? 'bg-red-400' : 'bg-gray-300'}`}><div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${pain ? 'left-7' : 'left-1'}`} /></div>
                         </div>
                         {hasSaved && <div className="text-center text-xs text-[#D68C93] mt-2 font-bold animate-fade-in">✓ 紀錄已儲存</div>}
                     </div>
-
                     <div className="w-full space-y-3 px-2">
                         <button onClick={onHome} className="w-full py-3.5 bg-gradient-to-r from-[#D68C93] to-[#C0707D] text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-[#EAD2D8] flex items-center justify-center gap-3 active:scale-95 transition transform"><Home size={20} /> 返回首頁</button>
                         <button onClick={onRestart} className="w-full py-3.5 bg-white border-2 border-[#E6E0DD] text-[#5E5052] rounded-xl font-bold text-lg hover:bg-[#F9F7F5] flex items-center justify-center gap-3 active:scale-95 transition"><RotateCcw size={20} /> 再做一次</button>
