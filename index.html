@@ -335,7 +335,7 @@
                             <div className="w-8 h-8 rounded-full bg-[#FFF0F3] text-[#A65A60] flex items-center justify-center font-bold flex-shrink-0">1</div>
                             <div className="text-[#5E5052] text-base leading-relaxed">
                                 <strong>資料本機儲存：</strong><br/>
-                                所有資料僅存在您的手機/平板/電腦(瀏覽器)裡，本程式不會將資料上傳雲端。如果您更換手機、瀏覽器，或清除瀏覽器紀錄，原本的資料就會消失。
+                                所有資料僅存在您的手機/平板/電腦(瀏覽器)裡，本程式不會將資料上傳雲端，如果您更換手機、瀏覽器或清除瀏覽器紀錄，您將得到全新的程式。
                             </div>
                         </div>
 
@@ -351,7 +351,7 @@
                             <div className="w-8 h-8 rounded-full bg-[#FFF0F3] text-[#A65A60] flex items-center justify-center font-bold flex-shrink-0">3</div>
                             <div className="text-[#5E5052] text-base leading-relaxed">
                                  <strong>顯示異常排除：</strong><br/>
-                                若使用電腦裝置瀏覽時，動作圖示被遮擋，請嘗試調整瀏覽器的縮放比例。
+                                若使用電腦裝置瀏覽時，無顯示動作圖示，請嘗試調整瀏覽器的縮放比例。
                             </div>
                         </div>
                     </div>
@@ -361,7 +361,7 @@
                             <Lightbulb size={20} /> 程式使用小技巧
                         </h3>
                         <p className="text-[#5E5052] text-sm leading-relaxed">
-                            手機/平板用戶建議將此網頁程式「加入主畫面」，操作起來會將會像使用APP一樣方便喔！
+                            手機/平板用戶建議將此網頁程式「加入主畫面」，操作起來將會像使用 APP 一樣方便喔！
                         </p>
                     </div>
                 </div>
@@ -936,6 +936,11 @@
 
         function PrintPreviewView({ caseName, exercises, notes, logo, onBack }) {
             const date = new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' });
+            
+            // 計算總預估時間 (包含休息)
+            const totalDurationSec = exercises.reduce((acc, curr) => acc + (curr.duration + (curr.rest || 5)) * curr.sets, 0);
+            const totalDurationMin = Math.ceil(totalDurationSec / 60);
+
             const handlePrint = () => window.print();
             useEffect(() => { window.scrollTo(0, 0); }, []);
             return (
@@ -945,33 +950,117 @@
                         <div className="font-bold">列印預覽模式</div>
                         <button onClick={handlePrint} className="bg-[#F1E8B8] text-[#5E5052] px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-[#E0D6A0] transition shadow-sm"><Printer size={20} /> 列印 / 存為 PDF</button>
                     </div>
+                    
+                    {/* 文件主體 */}
                     <div className="max-w-[210mm] mx-auto bg-white p-[15mm] shadow-xl print:shadow-none print:p-0 print:max-w-full print:bg-white my-8 print:my-0 text-[#5E5052] print-container">
-                        <div className="flex items-center justify-between border-b-2 border-[#D68C93] pb-3 mb-4">
-                            <div className="flex items-center gap-3"><img src={logo} alt="Logo" className="w-12 h-12 object-contain" style={logo.includes('flaticon') ? { filter: PINK_FILTER } : {}}/><div><h1 className="text-xl font-black text-[#D68C93]">赫賀豚吞嚥訓練管家</h1><p className="text-xs text-[#8F8385]">口腔機能自主訓練單</p></div></div>
-                            <div className="text-right"><div className="text-lg font-bold">{caseName}</div><div className="text-xs text-[#8F8385]">{date}</div></div>
-                        </div>
-                        <div className="space-y-2">
-                            {exercises.length === 0 ? ( <div className="text-center py-20 text-gray-400">本訓練單尚無內容</div> ) : ( exercises.map((ex, idx) => ( <div key={ex.id} className="flex gap-3 border-b border-gray-100 pb-2 break-inside-avoid page-break-inside-avoid"> <div className="w-20 h-20 flex-shrink-0 border border-gray-200 rounded-lg flex items-center justify-center bg-[#F9F7F5] overflow-hidden"><ExerciseMedia source={ex.imagePreview} alt={ex.name} className="w-full h-full object-contain" emojiSize="text-4xl"/></div><div className="flex-1"><div className="flex justify-between items-start mb-1"><h3 className="text-base font-bold text-[#D68C93]"><span className="text-xs text-[#8F8385] mr-2">#{idx + 1}</span>{ex.name}</h3></div><p className="text-gray-900 mb-1 leading-relaxed text-sm">{ex.description || "無動作說明"}</p><div className="flex gap-2 text-xs"><div className="bg-[#FDF2F4] px-2 py-0.5 rounded border border-[#EAD2D8] text-[#D68C93] font-bold">持續：{ex.duration}s</div><div className="bg-[#FFFCE6] px-2 py-0.5 rounded border border-[#F1E8B8] text-[#9C8742] font-bold">休息：{ex.rest || 5}s</div><div className="bg-[#F2F2F2] px-2 py-0.5 rounded border border-gray-200 text-[#5E5052] font-bold">重複：{ex.sets}組</div></div></div></div> )) )}
-                        </div>
                         
-                        {notes && ( <div className="mt-4 p-4 bg-[#FFF0F3] rounded-xl border border-[#D68C93]/30 break-inside-avoid page-break-inside-avoid"><h4 className="font-bold text-[#D68C93] mb-2 flex items-center gap-2 text-base"><Info size={16} /> 注意事項</h4><p className="text-[#5E5052] whitespace-pre-wrap leading-relaxed text-sm">{notes}</p></div> )}
-                        
-                        <div className="mt-4 pt-4 border-t-2 border-dashed border-gray-300 break-inside-avoid page-break-inside-avoid bg-white">
-                            <h4 className="font-bold text-[#5E5052] mb-4 flex items-center gap-2 text-sm"><PenTool size={16} /> 治療師紀錄</h4>
-                            <div className="flex justify-between items-end gap-8">
-                                <div className="flex-1 space-y-4">
-                                    <div className="border-b border-gray-400 pb-1 text-gray-500 text-sm">語言治療師簽名：</div>
-                                    <div>
-                                        <div className="text-gray-500 text-sm mb-1">臨床建議/備註：</div>
-                                        <div className="border-b border-gray-200 h-6 mb-2"></div>
-                                        <div className="border-b border-gray-200 h-6 mb-2"></div>
-                                        <div className="border-b border-gray-200 h-6"></div>
-                                    </div>
-                                </div>
-                                <div className="w-40">
-                                    <div className="border-b border-gray-400 pb-1 text-gray-500 text-sm text-center">日期：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+                        {/* 頁首 Header */}
+                        <div className="flex items-end justify-between border-b-2 border-[#D68C93] pb-4 mb-6">
+                            <div className="flex items-center gap-4">
+                                <img src={logo} alt="Logo" className="w-16 h-16 object-contain" style={logo.includes('flaticon') ? { filter: PINK_FILTER } : {}}/>
+                                <div>
+                                    <h1 className="text-2xl font-black text-[#D68C93] leading-none mb-1">赫賀豚吞嚥訓練管家</h1>
+                                    <p className="text-sm text-[#8F8385] font-bold tracking-widest">口腔機能自主訓練單</p>
                                 </div>
                             </div>
+                            <div className="text-right">
+                                <div className="text-xl font-bold text-[#5E5052] mb-1">{caseName}</div>
+                                <div className="text-xs text-[#8F8385] flex flex-col items-end gap-0.5">
+                                    <span>列印日期：{date}</span>
+                                    <span className="bg-[#F9F7F5] px-2 py-0.5 rounded text-[10px] border border-gray-200 font-medium">
+                                        共 {exercises.length} 個動作 / 約 {totalDurationMin} 分鐘
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 動作列表 */}
+                        <div className="space-y-4">
+                            {exercises.length === 0 ? ( 
+                                <div className="text-center py-20 text-gray-400 border-2 border-dashed border-gray-100 rounded-xl">本訓練單尚無內容</div> 
+                            ) : ( 
+                                exercises.map((ex, idx) => ( 
+                                    <div key={ex.id} className="flex gap-4 border-b border-gray-100 pb-4 break-inside-avoid page-break-inside-avoid items-start"> 
+                                        {/* 圖片區塊 */}
+                                        <div className="w-24 h-24 flex-shrink-0 border border-gray-200 rounded-xl flex items-center justify-center bg-white overflow-hidden shadow-sm">
+                                            <ExerciseMedia source={ex.imagePreview} alt={ex.name} className="w-full h-full object-contain p-1" emojiSize="text-5xl"/>
+                                        </div>
+                                        
+                                        {/* 內容區塊 */}
+                                        <div className="flex-1 min-w-0 pt-1">
+                                            <div className="flex justify-between items-baseline mb-2">
+                                                <h3 className="text-lg font-bold text-[#D68C93] flex items-center gap-2">
+                                                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#D68C93] text-white text-xs font-bold">{idx + 1}</span>
+                                                    {ex.name}
+                                                </h3>
+                                                <span className="text-[10px] px-2 py-0.5 bg-gray-100 rounded-full text-gray-500 font-medium">{ex.category || '動作'}</span>
+                                            </div>
+                                            
+                                            <p className="text-gray-700 text-sm leading-relaxed text-justify mb-3">{ex.description || "無動作說明"}</p>
+                                            
+                                            {/* 參數格狀排列 */}
+                                            <div className="grid grid-cols-3 gap-2">
+                                                <div className="bg-[#FDF2F4] px-2 py-1.5 rounded-lg border border-[#EAD2D8]/50 text-[#D68C93] font-bold text-xs flex items-center justify-center gap-1">
+                                                    <Clock size={12} /> 持續 {ex.duration} 秒
+                                                </div>
+                                                <div className="bg-[#FFFCE6] px-2 py-1.5 rounded-lg border border-[#F1E8B8]/50 text-[#9C8742] font-bold text-xs flex items-center justify-center gap-1">
+                                                    <Coffee size={12} /> 休息 {ex.rest || 5} 秒
+                                                </div>
+                                                <div className="bg-[#F2F2F2] px-2 py-1.5 rounded-lg border border-gray-200/50 text-[#5E5052] font-bold text-xs flex items-center justify-center gap-1">
+                                                    <Repeat size={12} /> 重複 {ex.sets} 組
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div> 
+                                )) 
+                            )}
+                        </div>
+                        
+                        {/* 注意事項 (維持粉色背景) */}
+                        {notes && ( 
+                            <div className="mt-6 p-5 bg-[#FFF0F3] rounded-2xl border border-[#D68C93]/20 break-inside-avoid page-break-inside-avoid shadow-sm">
+                                <h4 className="font-bold text-[#D68C93] mb-2 flex items-center gap-2 text-sm border-b border-[#D68C93]/20 pb-2">
+                                    <Info size={16} /> 治療師叮嚀
+                                </h4>
+                                <p className="text-[#5E5052] whitespace-pre-wrap leading-relaxed text-sm">{notes}</p>
+                            </div> 
+                        )}
+                        
+                        {/* 治療師紀錄 (白色背景，標準表單樣式) */}
+                        <div className="mt-6 pt-6 border-t-2 border-dashed border-gray-300 break-inside-avoid page-break-inside-avoid bg-white">
+                            <div className="flex justify-between items-center mb-4">
+                                <h4 className="font-bold text-[#5E5052] flex items-center gap-2 text-sm">
+                                    <PenTool size={16} className="text-[#D68C93]" /> 治療師紀錄欄
+                                </h4>
+                                <div className="text-[10px] text-gray-400">請於回診時攜帶此單</div>
+                            </div>
+                            
+                            <div className="flex gap-8">
+                                {/* 左側：建議欄 */}
+                                <div className="flex-1 space-y-6">
+                                    <div className="relative pt-1">
+                                        <div className="absolute top-0 left-0 text-xs font-bold text-gray-400">臨床建議 / 備註</div>
+                                        <div className="border-b border-gray-200 h-8"></div>
+                                        <div className="border-b border-gray-200 h-8"></div>
+                                    </div>
+                                </div>
+                                {/* 右側：簽名與日期 */}
+                                <div className="w-1/3 flex flex-col justify-end gap-6">
+                                    <div>
+                                        <div className="text-xs text-gray-400 mb-2">語言治療師簽名</div>
+                                        <div className="border-b border-gray-300 h-8"></div>
+                                    </div>
+                                    <div className="flex items-center justify-end gap-2 text-sm text-gray-500">
+                                        <span>日期：</span>
+                                        <div className="border-b border-gray-300 w-24"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 頁尾浮水印 */}
+                        <div className="mt-8 text-center text-[10px] text-gray-300 print:text-gray-300">
+                            Hehe Dolphin Swallow Training Manager
                         </div>
                     </div>
                 </div>
