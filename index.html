@@ -11,6 +11,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>赫賀豚吞嚥訓練管家</title>
     
+    <!-- PWA 設定 (加入主畫面後全螢幕顯示) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="赫賀豚吞嚥">
+    <meta name="mobile-web-app-capable" content="yes">
+    <!-- 更新 App 圖示 -->
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/zerosparty/images/refs/heads/main/applogo.jpg">
+    <!-- 內嵌 Manifest 以支援 Android 加入主畫面後的 Standalone 模式 -->
+    <link rel="manifest" href='data:application/manifest+json,{"name":"赫賀豚吞嚥訓練管家","short_name":"赫賀豚吞嚥","start_url":".","display":"standalone","background_color":"#F7F4F2","theme_color":"#D68C93","icons":[{"src":"https://raw.githubusercontent.com/zerosparty/images/refs/heads/main/applogo.jpg","sizes":"512x512","type":"image/jpeg"}]}'>
+
     <!-- 1. 載入樣式庫 (Tailwind CSS) -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -27,6 +37,8 @@
             background-color: #F7F4F2;
             -webkit-tap-highlight-color: transparent;
             min-height: 100vh;
+            /* 避免 iOS 回彈效果 */
+            overscroll-behavior-y: none;
         }
         
         #root {
@@ -118,7 +130,7 @@
 
     <!-- React Application Script -->
     <script type="text/babel" data-type="module" data-presets="react">
-        import React, { useState, useEffect, useRef, useMemo } from 'https://esm.sh/react@18.2.0';
+        import React, { useState, useEffect, useRef, useMemo, useCallback } from 'https://esm.sh/react@18.2.0';
         import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client';
         import { 
             Plus, Trash2, Play, Pause, Clock, Repeat, Image as ImageIcon, 
@@ -232,12 +244,12 @@
 
         const isImageFile = (source) => source && (source.startsWith('data:image') || source.startsWith('http') || source.startsWith('blob:'));
 
-        const ExerciseMedia = ({ source, alt, className = "", emojiSize = "text-7xl" }) => {
+        const ExerciseMedia = React.memo(({ source, alt, className = "", emojiSize = "text-7xl" }) => {
             if (isImageFile(source)) {
-                return <img src={source} alt={alt} className={`w-full h-full object-contain p-2 ${className}`} />;
+                return <img src={source} alt={alt} className={`w-full h-full object-contain p-2 ${className}`} loading="lazy" />;
             }
             return <div className={`flex items-center justify-center w-full h-full ${emojiSize} select-none leading-none`}>{source || '🙂'}</div>;
-        };
+        });
 
         const DEFAULT_EXERCISES_TEMPLATE = [
             { id: 'ex-1', name: '舌頭前後運動', category: '舌', description: '舌頭向前伸（越長越好），再快速收回。', duration: 15, sets: 5, rest: 5, imagePreview: 'https://raw.githubusercontent.com/zerosparty/images/refs/heads/main/01.jpg' },
@@ -252,14 +264,15 @@
         ];
 
         const SUCCESS_SOUND_URL = "https://assets.mixkit.co/sfx/preview/mixkit-video-game-win-2016.mp3";
-        const DEFAULT_LOGO = "https://cdn-icons-png.flaticon.com/512/2995/2995525.png";
+        // 更新預設 LOGO
+        const DEFAULT_LOGO = "https://raw.githubusercontent.com/zerosparty/images/refs/heads/main/applogo.jpg";
         const PINK_FILTER = "invert(65%) sepia(30%) saturate(876%) hue-rotate(307deg) brightness(87%) contrast(89%)";
 
         // --------------------------------------------------------------------------------
         // 2. 共用組件
         // --------------------------------------------------------------------------------
 
-        const CopyrightFooter = ({ className = "", onAboutClick }) => (
+        const CopyrightFooter = React.memo(({ className = "", onAboutClick }) => (
             <div className={`text-[10px] text-center text-gray-400 flex flex-col items-center gap-1 border-t pt-4 mt-auto ${className}`}>
                 {onAboutClick && (
                     <button onClick={onAboutClick} className="mb-3 w-full py-2 bg-white border border-[#D68C93] text-[#D68C93] rounded-lg text-xs font-bold hover:bg-[#FFF0F3] transition flex items-center justify-center gap-2 shadow-sm">
@@ -273,14 +286,14 @@
                     <span className="flex items-center justify-center gap-1 mt-1"><Mail size={10}/> zerosparty@gmail.com</span>
                 </div>
             </div>
-        );
+        ));
 
         function AboutView({ onBack, logo }) {
             useEffect(() => { window.scrollTo(0, 0); }, []);
             return (
                 <div className="space-y-6 animate-fade-in pb-20">
                     <div className="flex items-center gap-2 mb-4">
-                        <button onClick={onBack} className="p-2 hover:bg-white rounded-full transition text-[#5E5052]"><ArrowLeft size={24} /></button>
+                        <button onClick={onBack} aria-label="返回" className="p-2 hover:bg-white rounded-full transition text-[#5E5052]"><ArrowLeft size={24} /></button>
                         <h2 className="text-xl font-bold text-[#5E5052]">關於本程式</h2>
                     </div>
                     <div className="flex flex-col items-center justify-center py-8">
@@ -325,7 +338,7 @@
             return (
                 <div className="space-y-6 animate-fade-in pb-20">
                       <div className="flex items-center gap-2 mb-4">
-                        <button onClick={onBack} className="p-2 hover:bg-white rounded-full transition text-[#5E5052]">
+                        <button onClick={onBack} aria-label="返回" className="p-2 hover:bg-white rounded-full transition text-[#5E5052]">
                             <ArrowLeft size={24} />
                         </button>
                         <h2 className="text-xl font-bold text-[#A65A60]">使用前注意</h2>
@@ -369,18 +382,21 @@
             );
         }
 
-        const CalendarWidget = ({ logs }) => {
+        // 使用 React.memo 優化日曆組件，避免在父層狀態變更時不必要的重新渲染
+        const CalendarWidget = React.memo(({ logs }) => {
             const [currentDate, setCurrentDate] = useState(new Date());
             const getDaysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
             const getFirstDayOfMonth = (date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-            const prevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
-            const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+            const prevMonth = useCallback(() => setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1)), []);
+            const nextMonth = useCallback(() => setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1)), []);
             const daysInMonth = getDaysInMonth(currentDate);
             const firstDay = getFirstDayOfMonth(currentDate);
             const today = new Date();
             const days = [];
             for (let i = 0; i < firstDay; i++) days.push(null);
             for (let i = 1; i <= daysInMonth; i++) days.push(i);
+            
+            // 優化查詢邏輯
             const hasLog = (day) => {
                 if (!day) return false;
                 return logs.some(log => {
@@ -388,10 +404,11 @@
                     return logDate.getDate() === day && logDate.getMonth() === currentDate.getMonth() && logDate.getFullYear() === currentDate.getFullYear();
                 });
             };
-            const monthlyCount = logs.filter(log => {
+            const monthlyCount = useMemo(() => logs.filter(log => {
                 const logDate = new Date(log.date);
                 return logDate.getMonth() === currentDate.getMonth() && logDate.getFullYear() === currentDate.getFullYear();
-            }).length;
+            }).length, [logs, currentDate]);
+
             return (
                 <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-6">
                     <div className="flex justify-between items-center mb-4">
@@ -415,7 +432,7 @@
                     </div>
                 </div>
             );
-        };
+        });
 
         // --------------------------------------------------------------------------------
         // 3. 功能 Views
@@ -435,7 +452,7 @@
                 <div className="space-y-6 animate-fade-in pb-20">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
-                            <button onClick={onBack} className="p-2 hover:bg-white rounded-full transition text-[#5E5052]"><ArrowLeft size={24} /></button>
+                            <button onClick={onBack} aria-label="返回" className="p-2 hover:bg-white rounded-full transition text-[#5E5052]"><ArrowLeft size={24} /></button>
                             <div>
                                 <h2 className="text-xl font-bold text-[#5E5052] flex items-center gap-2"><Database size={20} className="text-[#D68C93]" /> 訓練動作庫</h2>
                                 <p className="text-xs text-[#8F8385]">可在此維護標準動作庫</p>
@@ -483,12 +500,12 @@
                                 <div className="flex flex-col gap-1 items-center justify-center pl-2 border-l border-gray-100">
                                     {activeCategory === '全部' && (
                                         <>
-                                            <button onClick={() => onMoveUp(exercises.findIndex(e => e.id === ex.id))} disabled={exercises.findIndex(e => e.id === ex.id) === 0} className={`p-1.5 rounded-lg transition ${exercises.findIndex(e => e.id === ex.id) === 0 ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:bg-[#F9F7F5] hover:text-[#C3A6CB]'}`}><ArrowUp size={18} /></button>
-                                            <button onClick={() => onMoveDown(exercises.findIndex(e => e.id === ex.id))} disabled={exercises.findIndex(e => e.id === ex.id) === exercises.length - 1} className={`p-1.5 rounded-lg transition ${exercises.findIndex(e => e.id === ex.id) === exercises.length - 1 ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:bg-[#F9F7F5] hover:text-[#C3A6CB]'}`}><ArrowDown size={18} /></button>
+                                            <button onClick={() => onMoveUp(exercises.findIndex(e => e.id === ex.id))} aria-label="上移" disabled={exercises.findIndex(e => e.id === ex.id) === 0} className={`p-1.5 rounded-lg transition ${exercises.findIndex(e => e.id === ex.id) === 0 ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:bg-[#F9F7F5] hover:text-[#C3A6CB]'}`}><ArrowUp size={18} /></button>
+                                            <button onClick={() => onMoveDown(exercises.findIndex(e => e.id === ex.id))} aria-label="下移" disabled={exercises.findIndex(e => e.id === ex.id) === exercises.length - 1} className={`p-1.5 rounded-lg transition ${exercises.findIndex(e => e.id === ex.id) === exercises.length - 1 ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:bg-[#F9F7F5] hover:text-[#C3A6CB]'}`}><ArrowDown size={18} /></button>
                                         </>
                                     )}
-                                    <button onClick={() => onEdit(ex)} className="p-1.5 rounded-lg text-gray-400 hover:text-[#C3A6CB] hover:bg-[#F9F7F5] transition"><Edit3 size={18} /></button>
-                                    <button onClick={() => onDelete(ex.id)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-[#FFF0F3] transition"><Trash2 size={18} /></button>
+                                    <button onClick={() => onEdit(ex)} aria-label="編輯" className="p-1.5 rounded-lg text-gray-400 hover:text-[#C3A6CB] hover:bg-[#F9F7F5] transition"><Edit3 size={18} /></button>
+                                    <button onClick={() => onDelete(ex.id)} aria-label="刪除" className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-[#FFF0F3] transition"><Trash2 size={18} /></button>
                                 </div>
                             </div>
                         ))}
@@ -520,7 +537,7 @@
                 <div className="space-y-4 animate-fade-in pb-20">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <button onClick={onCancel} className="p-2 hover:bg-white rounded-full transition text-[#5E5052]"><ArrowLeft size={24} /></button>
+                            <button onClick={onCancel} aria-label="返回" className="p-2 hover:bg-white rounded-full transition text-[#5E5052]"><ArrowLeft size={24} /></button>
                             <h2 className="text-xl font-bold text-[#5E5052]">選擇訓練動作</h2>
                         </div>
                     </div>
@@ -614,7 +631,7 @@
             };
             return (
                 <div className="space-y-4 animate-fade-in pb-20">
-                    <div className="flex items-center justify-between"><div className="flex items-center gap-2"><button onClick={onBack} className="p-2 hover:bg-white rounded-full transition text-[#5E5052]"><ArrowLeft size={24} /></button><h2 className="text-xl font-bold text-[#5E5052]">訓練紀錄與打卡</h2></div>{logs.length > 0 && <button onClick={downloadCSV} className="flex items-center gap-1 text-sm bg-white border border-[#D68C93] text-[#D68C93] px-3 py-1.5 rounded-lg font-bold shadow-sm hover:bg-[#FFF0F3] transition"><Download size={14}/> 匯出資料</button>}</div>
+                    <div className="flex items-center justify-between"><div className="flex items-center gap-2"><button onClick={onBack} aria-label="返回" className="p-2 hover:bg-white rounded-full transition text-[#5E5052]"><ArrowLeft size={24} /></button><h2 className="text-xl font-bold text-[#5E5052]">訓練紀錄與打卡</h2></div>{logs.length > 0 && <button onClick={downloadCSV} className="flex items-center gap-1 text-sm bg-white border border-[#D68C93] text-[#D68C93] px-3 py-1.5 rounded-lg font-bold shadow-sm hover:bg-[#FFF0F3] transition"><Download size={14}/> 匯出資料</button>}</div>
                     <CalendarWidget logs={logs} />
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
                         <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100"><h3 className="font-bold text-[#5E5052] flex items-center gap-2"><Activity size={18} className="text-[#D68C93]"/> 詳細紀錄列表</h3><span className="text-xs text-[#8F8385]">共 {logs.length} 筆</span></div>
@@ -1231,6 +1248,34 @@
             const restDuration = currentExercise.rest || 5; 
             const timerRef = useRef(null);
 
+            // 優化：加入 Wake Lock 防止螢幕休眠
+            useEffect(() => {
+                let wakeLock = null;
+                const requestWakeLock = async () => {
+                    if ('wakeLock' in navigator) {
+                        try {
+                            wakeLock = await navigator.wakeLock.request('screen');
+                        } catch (err) {
+                            console.warn('Wake Lock error:', err);
+                        }
+                    }
+                };
+                requestWakeLock();
+                
+                // 處理切換分頁後重新獲取 Wake Lock
+                const handleVisibilityChange = () => {
+                    if (document.visibilityState === 'visible') {
+                        requestWakeLock();
+                    }
+                };
+                
+                document.addEventListener('visibilitychange', handleVisibilityChange);
+                return () => {
+                    if (wakeLock) wakeLock.release();
+                    document.removeEventListener('visibilitychange', handleVisibilityChange);
+                };
+            }, []);
+
             // 優化：語音合成增加檢查，避免在不支援的瀏覽器報錯
             const speak = (text) => { 
                 if (!voiceGuide || !('speechSynthesis' in window)) return; 
@@ -1411,18 +1456,18 @@
             const currentCase = cases.find(c => c.id === currentCaseId) || cases[0] || { exercises: [] };
             const exercises = currentCase.exercises || [];
 
-            const updateCurrentExercises = (newExercises) => {
+            const updateCurrentExercises = useCallback((newExercises) => {
                 setCases(prevCases => prevCases.map(c => {
                     if (c.id === currentCaseId) return { ...c, exercises: newExercises };
                     return c;
                 }));
-            };
+            }, [currentCaseId]);
 
-            const handleOpenAddCase = () => { setEditingCaseData(null); setIsCaseModalOpen(true); };
-            const handleOpenEditCase = (caseItem) => { setEditingCaseData(caseItem); setIsCaseModalOpen(true); };
+            const handleOpenAddCase = useCallback(() => { setEditingCaseData(null); setIsCaseModalOpen(true); }, []);
+            const handleOpenEditCase = useCallback((caseItem) => { setEditingCaseData(caseItem); setIsCaseModalOpen(true); }, []);
             
             // 儲存個案邏輯：新增時不預設動作 (空白)
-            const handleSaveCase = (formData) => {
+            const handleSaveCase = useCallback((formData) => {
                 if (editingCaseData) {
                     setCases(prevCases => prevCases.map(c => c.id === editingCaseData.id ? { ...c, ...formData } : c));
                 } else {
@@ -1430,49 +1475,48 @@
                         ...formData, 
                         exercises: [] // 空白，不從 library 複製
                     };
-                    setCases([...cases, newCase]);
+                    setCases(prev => [...prev, newCase]);
                     setCurrentCaseId(newCase.id);
                     setView('home');
                 }
                 setIsCaseModalOpen(false);
                 setIsMenuOpen(false);
-            };
+            }, [editingCaseData]);
 
-            const handleSwitchCase = (id) => { setCurrentCaseId(id); setIsMenuOpen(false); setView('home'); };
+            const handleSwitchCase = useCallback((id) => { setCurrentCaseId(id); setIsMenuOpen(false); setView('home'); }, []);
             
             // 動作庫 CRUD
-            const handleLibraryAdd = () => {
+            const handleLibraryAdd = useCallback(() => {
                 setSelectedExercise(null); 
                 setView('library_add');
-            };
-            const handleLibraryEdit = (ex) => {
+            }, []);
+            const handleLibraryEdit = useCallback((ex) => {
                 setSelectedExercise(ex);
                 setView('library_edit');
-            };
-            const handleLibrarySave = (newEx) => {
-                if (view === 'library_add') {
-                    setLibrary([...library, newEx]);
-                } else {
-                    setLibrary(library.map(ex => ex.id === newEx.id ? newEx : ex));
-                }
+            }, []);
+            const handleLibrarySave = useCallback((newEx) => {
+                setLibrary(prev => {
+                    if (view === 'library_add') return [...prev, newEx];
+                    return prev.map(ex => ex.id === newEx.id ? newEx : ex);
+                });
                 setView('library');
-            };
-            const handleLibraryDelete = (id) => {
+            }, [view]);
+            const handleLibraryDelete = useCallback((id) => {
                 if (confirm("確定要從動作庫刪除此項目嗎？")) {
-                    setLibrary(library.filter(ex => ex.id !== id));
+                    setLibrary(prev => prev.filter(ex => ex.id !== id));
                 }
-            };
-            const handleLibraryMoveUp = (index) => { if (index === 0) return; const newLib = [...library]; [newLib[index-1], newLib[index]] = [newLib[index], newLib[index-1]]; setLibrary(newLib); };
-            const handleLibraryMoveDown = (index) => { if (index === library.length-1) return; const newLib = [...library]; [newLib[index+1], newLib[index]] = [newLib[index], newLib[index+1]]; setLibrary(newLib); };
+            }, []);
+            const handleLibraryMoveUp = useCallback((index) => { if (index === 0) return; setLibrary(prev => { const newLib = [...prev]; [newLib[index-1], newLib[index]] = [newLib[index], newLib[index-1]]; return newLib; }); }, []);
+            const handleLibraryMoveDown = useCallback((index) => { setLibrary(prev => { if (index === prev.length-1) return prev; const newLib = [...prev]; [newLib[index+1], newLib[index]] = [newLib[index], newLib[index+1]]; return newLib; }); }, []);
 
             // 新增個案動作邏輯
-            const handleAddExercise = (newEx) => { 
+            const handleAddExercise = useCallback((newEx) => { 
                 updateCurrentExercises([...exercises, newEx]); 
                 setView('home'); 
-            };
+            }, [exercises, updateCurrentExercises]);
 
             // 從動作庫選擇加入
-            const handleSelectExercise = (ex) => {
+            const handleSelectExercise = useCallback((ex) => {
                 // 深拷貝並產生新 ID
                 const newExercise = {
                     ...ex,
@@ -1480,64 +1524,65 @@
                 };
                 updateCurrentExercises([...exercises, newExercise]);
                 setView('home');
-            };
+            }, [exercises, updateCurrentExercises]);
 
             // 請求建立新自定義動作
-            const handleRequestCreateNew = () => {
+            const handleRequestCreateNew = useCallback(() => {
                 setView('add');
-            };
+            }, []);
 
-            const handleDeleteCaseRequest = (id, e) => {
+            const handleDeleteCaseRequest = useCallback((id, e) => {
                 e.stopPropagation();
                 if (cases.length <= 1) { alert("至少需要保留一個個案資料！"); return; }
                 setConfirmModal({
                     isOpen: true, title: '刪除個案', message: '確定要刪除此個案及其所有訓練資料嗎？此動作無法復原。',
                     onConfirm: () => {
-                        const newCases = cases.filter(c => c.id !== id);
-                        setCases(newCases);
-                        if (id === currentCaseId) setCurrentCaseId(newCases[0].id);
-                        setConfirmModal({ ...confirmModal, isOpen: false });
+                        setCases(prev => {
+                            const newCases = prev.filter(c => c.id !== id);
+                            if (id === currentCaseId) setCurrentCaseId(newCases[0].id);
+                            return newCases;
+                        });
+                        setConfirmModal(prev => ({ ...prev, isOpen: false }));
                     }
                 });
-            };
+            }, [cases.length, currentCaseId]);
             
-            const handleDeleteExerciseRequest = (id) => {
+            const handleDeleteExerciseRequest = useCallback((id) => {
                 setConfirmModal({
                     isOpen: true, title: '刪除動作', message: '確定要刪除這個訓練動作嗎？',
                     onConfirm: () => {
-                        const newList = exercises.filter(ex => ex.id !== id);
-                        updateCurrentExercises(newList);
+                        updateCurrentExercises(exercises.filter(ex => ex.id !== id));
                         if (selectedExercise && selectedExercise.id === id) { setView('home'); setSelectedExercise(null); }
-                        setConfirmModal({ ...confirmModal, isOpen: false });
+                        setConfirmModal(prev => ({ ...prev, isOpen: false }));
                     }
                 });
-            };
+            }, [exercises, updateCurrentExercises, selectedExercise]);
             
-            const handleMoveUp = (index) => { if (index === 0) return; const newEx = [...exercises]; [newEx[index-1], newEx[index]] = [newEx[index], newEx[index-1]]; updateCurrentExercises(newEx); };
-            const handleMoveDown = (index) => { if (index === exercises.length-1) return; const newEx = [...exercises]; [newEx[index+1], newEx[index]] = [newEx[index], newEx[index+1]]; updateCurrentExercises(newEx); };
+            const handleMoveUp = useCallback((index) => { if (index === 0) return; const newEx = [...exercises]; [newEx[index-1], newEx[index]] = [newEx[index], newEx[index-1]]; updateCurrentExercises(newEx); }, [exercises, updateCurrentExercises]);
+            const handleMoveDown = useCallback((index) => { if (index === exercises.length-1) return; const newEx = [...exercises]; [newEx[index+1], newEx[index]] = [newEx[index], newEx[index+1]]; updateCurrentExercises(newEx); }, [exercises, updateCurrentExercises]);
             
-            const handleUpdateExercise = (updatedEx) => {
+            const handleUpdateExercise = useCallback((updatedEx) => {
                 const newExercises = exercises.map(ex => ex.id === updatedEx.id ? updatedEx : ex);
                 updateCurrentExercises(newExercises);
                 setSelectedExercise(updatedEx);
                 setView('detail');
-            };
+            }, [exercises, updateCurrentExercises]);
             
-            const handleViewDetail = (ex) => { setSelectedExercise(ex); setView('detail'); };
-            const handleEditClick = (ex) => { setSelectedExercise(ex); setView('edit'); };
-            const requestStartTraining = (startIndex = 0) => { if (exercises.length === 0) return; setPendingTrainingOptions({ startIndex }); setView('safety_check'); };
-            const confirmSafetyAndStart = () => { if (pendingTrainingOptions) { setCurrentExerciseIndex(pendingTrainingOptions.startIndex); setView('play'); setPendingTrainingOptions(null); } };
-            const restartTraining = () => { setCurrentExerciseIndex(0); setView('home'); setTimeout(() => requestStartTraining(0), 0); };
-            const handleRequestPrint = () => setView('print_setup');
-            const handleConfirmPrint = (notes) => { setPrintNotes(notes); setView('print_preview'); };
-            const handleViewHistory = () => { setIsMenuOpen(false); setView('history'); };
-            const handleViewLibrary = () => { setIsMenuOpen(false); setView('library'); };
-            const handleViewAbout = () => { setIsMenuOpen(false); setView('about'); };
-            const handleViewNotice = () => { setIsMenuOpen(false); setView('notice'); }; 
-            const handleLogoUpload = async (e) => { const file = e.target.files[0]; if (file) { try { const compressedBase64 = await compressImage(file); setAppLogo(compressedBase64); alert("Logo 已更新！"); } catch (error) { alert("圖片處理失敗：" + error); } } };
-            const handleSaveLog = (rpe, pain) => { const newLog = { id: Date.now(), date: new Date().toISOString(), caseId: currentCaseId, caseName: currentCase.name, exercisesCount: exercises.length, rpe: rpe, pain: pain }; try { const existingLogs = JSON.parse(localStorage.getItem(STORAGE_KEY_LOGS) || '[]'); existingLogs.push(newLog); saveToStorage(STORAGE_KEY_LOGS, existingLogs); } catch(e) { console.error(e); } };
-            const handleBackup = () => { try { const data = { cases: JSON.parse(localStorage.getItem(STORAGE_KEY_CASES) || '[]'), logs: JSON.parse(localStorage.getItem(STORAGE_KEY_LOGS) || '[]'), logo: localStorage.getItem(STORAGE_KEY_LOGO) || DEFAULT_LOGO }; const blob = new Blob([JSON.stringify(data)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `赫賀豚_備份_${new Date().toLocaleDateString().replace(/\//g, '-')}.json`; link.click(); } catch (e) { alert("備份失敗：" + e.message); } };
-            const handleRestore = (e) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (event) => { try { const data = JSON.parse(event.target.result); if (!data.cases || !Array.isArray(data.cases)) throw new Error("檔案格式錯誤"); if (confirm("警告：還原將覆蓋目前所有資料（個案、紀錄），確定要繼續嗎？")) { localStorage.setItem(STORAGE_KEY_CASES, JSON.stringify(data.cases)); if (data.logs) localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(data.logs)); if (data.logo) localStorage.setItem(STORAGE_KEY_LOGO, data.logo); alert("還原成功！頁面將重新整理。"); window.location.reload(); } } catch (err) { alert("還原失敗：檔案無效或格式錯誤。"); } }; reader.readAsText(file); e.target.value = ''; };
+            const handleViewDetail = useCallback((ex) => { setSelectedExercise(ex); setView('detail'); }, []);
+            const handleEditClick = useCallback((ex) => { setSelectedExercise(ex); setView('edit'); }, []);
+            const requestStartTraining = useCallback((startIndex = 0) => { if (exercises.length === 0) return; setPendingTrainingOptions({ startIndex }); setView('safety_check'); }, [exercises.length]);
+            const confirmSafetyAndStart = useCallback(() => { if (pendingTrainingOptions) { setCurrentExerciseIndex(pendingTrainingOptions.startIndex); setView('play'); setPendingTrainingOptions(null); } }, [pendingTrainingOptions]);
+            const restartTraining = useCallback(() => { setCurrentExerciseIndex(0); setView('home'); setTimeout(() => requestStartTraining(0), 0); }, [requestStartTraining]);
+            const handleRequestPrint = useCallback(() => setView('print_setup'), []);
+            const handleConfirmPrint = useCallback((notes) => { setPrintNotes(notes); setView('print_preview'); }, []);
+            const handleViewHistory = useCallback(() => { setIsMenuOpen(false); setView('history'); }, []);
+            const handleViewLibrary = useCallback(() => { setIsMenuOpen(false); setView('library'); }, []);
+            const handleViewAbout = useCallback(() => { setIsMenuOpen(false); setView('about'); }, []);
+            const handleViewNotice = useCallback(() => { setIsMenuOpen(false); setView('notice'); }, []); 
+            const handleLogoUpload = useCallback(async (e) => { const file = e.target.files[0]; if (file) { try { const compressedBase64 = await compressImage(file); setAppLogo(compressedBase64); alert("Logo 已更新！"); } catch (error) { alert("圖片處理失敗：" + error); } } }, []);
+            const handleSaveLog = useCallback((rpe, pain) => { const newLog = { id: Date.now(), date: new Date().toISOString(), caseId: currentCaseId, caseName: currentCase.name, exercisesCount: exercises.length, rpe: rpe, pain: pain }; try { const existingLogs = JSON.parse(localStorage.getItem(STORAGE_KEY_LOGS) || '[]'); existingLogs.push(newLog); saveToStorage(STORAGE_KEY_LOGS, existingLogs); } catch(e) { console.error(e); } }, [currentCaseId, currentCase.name, exercises.length]);
+            const handleBackup = useCallback(() => { try { const data = { cases: JSON.parse(localStorage.getItem(STORAGE_KEY_CASES) || '[]'), logs: JSON.parse(localStorage.getItem(STORAGE_KEY_LOGS) || '[]'), logo: localStorage.getItem(STORAGE_KEY_LOGO) || DEFAULT_LOGO }; const blob = new Blob([JSON.stringify(data)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `赫賀豚_備份_${new Date().toLocaleDateString().replace(/\//g, '-')}.json`; link.click(); } catch (e) { alert("備份失敗：" + e.message); } }, []);
+            const handleRestore = useCallback((e) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (event) => { try { const data = JSON.parse(event.target.result); if (!data.cases || !Array.isArray(data.cases)) throw new Error("檔案格式錯誤"); if (confirm("警告：還原將覆蓋目前所有資料（個案、紀錄），確定要繼續嗎？")) { localStorage.setItem(STORAGE_KEY_CASES, JSON.stringify(data.cases)); if (data.logs) localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(data.logs)); if (data.logo) localStorage.setItem(STORAGE_KEY_LOGO, data.logo); alert("還原成功！頁面將重新整理。"); window.location.reload(); } } catch (err) { alert("還原失敗：檔案無效或格式錯誤。"); } }; reader.readAsText(file); e.target.value = ''; }, []);
 
             if (!isInitialized) return null;
 
@@ -1558,11 +1603,11 @@
                             <header className="bg-gradient-to-r from-[#C3A6CB] to-[#D68C93] text-white p-3 shadow-md sticky top-0 z-30 no-print">
                                 <div className="max-w-md mx-auto flex items-center justify-between">
                                     <div className="flex items-center gap-3">
-                                        <button onClick={() => setIsMenuOpen(true)} className="p-1.5 -ml-2 mr-1 hover:bg-white/20 rounded-lg transition"><Menu size={28} /></button>
+                                        <button onClick={() => setIsMenuOpen(true)} aria-label="選單" className="p-1.5 -ml-2 mr-1 hover:bg-white/20 rounded-lg transition"><Menu size={28} /></button>
                                         <div className="relative group cursor-pointer w-10 h-10 bg-white rounded-full p-0.5 shadow-sm overflow-hidden flex-shrink-0"><img src={appLogo} alt="Logo" className="w-full h-full object-contain rounded-full" style={appLogo.includes('flaticon') ? { filter: PINK_FILTER } : {}} onClick={() => setView('home')} /><label className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-white text-[8px] text-center leading-tight cursor-pointer">更換<br/>Logo<input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} /></label></div>
                                         <div onClick={() => setView('home')} className="cursor-pointer"><h1 className="text-lg font-bold tracking-wide leading-tight">赫賀豚吞嚥訓練管家</h1><div className="text-xs opacity-90 font-normal flex items-center gap-1"><User size={10} /> {currentCase.name} {currentCase.birthDate && <span className="opacity-80"> ({calculateAge(currentCase.birthDate)}歲)</span>}</div></div>
                                     </div>
-                                    {view !== 'home' && <button onClick={() => { if(view === 'play' && !window.confirm("訓練正在進行中，確定要返回首頁嗎？")) return; setView('home'); }} className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition backdrop-blur-sm"><Home size={20} /></button>}
+                                    {view !== 'home' && <button onClick={() => { if(view === 'play' && !window.confirm("訓練正在進行中，確定要返回首頁嗎？")) return; setView('home'); }} aria-label="回首頁" className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition backdrop-blur-sm"><Home size={20} /></button>}
                                 </div>
                             </header>
                         </>
