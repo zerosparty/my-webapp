@@ -8,18 +8,26 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- 加入 viewport-fit=cover 以支援全螢幕與瀏海屏適配 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>赫賀豚吞嚥訓練管家</title>
     
     <!-- PWA 設定 (加入主畫面後全螢幕顯示) -->
+    <!-- iOS 專用設定 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="赫賀豚吞嚥">
+    <!-- 設定 iOS 加入主畫面時的名稱 -->
+    <meta name="apple-mobile-web-app-title" content="吞嚥訓練管家">
+    
+    <!-- Android / Chrome 專用設定 -->
     <meta name="mobile-web-app-capable" content="yes">
-    <!-- 更新 App 圖示 -->
+    <meta name="theme-color" content="#F7F4F2">
+    
+    <!-- App 圖示 -->
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/zerosparty/images/refs/heads/main/applogo.jpg">
-    <!-- 內嵌 Manifest 以支援 Android 加入主畫面後的 Standalone 模式 -->
-    <link rel="manifest" href='data:application/manifest+json,{"name":"赫賀豚吞嚥訓練管家","short_name":"赫賀豚吞嚥","start_url":".","display":"standalone","background_color":"#F7F4F2","theme_color":"#D68C93","icons":[{"src":"https://raw.githubusercontent.com/zerosparty/images/refs/heads/main/applogo.jpg","sizes":"512x512","type":"image/jpeg"}]}'>
+    
+    <!-- 內嵌 Manifest 以支援 Android 加入主畫面後的 Standalone (獨立視窗) 模式，並設定 APP 名稱 -->
+    <link rel="manifest" href='data:application/manifest+json,{"name":"吞嚥訓練管家","short_name":"吞嚥訓練管家","start_url":".","display":"standalone","background_color":"#F7F4F2","theme_color":"#D68C93","icons":[{"src":"https://raw.githubusercontent.com/zerosparty/images/refs/heads/main/applogo.jpg","sizes":"512x512","type":"image/jpeg"}]}'>
 
     <!-- 1. 載入樣式庫 (Tailwind CSS) -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -37,7 +45,7 @@
             background-color: #F7F4F2;
             -webkit-tap-highlight-color: transparent;
             min-height: 100vh;
-            /* 避免 iOS 回彈效果 */
+            /* 避免 iOS 下拉回彈效果，讓體驗更像 App */
             overscroll-behavior-y: none;
         }
         
@@ -45,6 +53,8 @@
             min-height: 100vh;
             display: flex;
             justify-content: center;
+            /* 確保內容不會被 iOS 底部 Home Indicator 遮擋 */
+            padding-bottom: env(safe-area-inset-bottom);
         }
         
         @keyframes fade-in {
